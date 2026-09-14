@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07111f">
+    <title>Class Rep Sign In | NWU SE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/jpeg" href="assets/NWU.jpeg">
+    <style>
+        .auth-container {
+            min-height: calc(100vh - 82px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 40px 20px 60px;
+        }
+        .auth-card {
+            width: min(440px, 100%);
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 36px 32px;
+            box-shadow: 0 20px 50px rgba(17, 17, 17, 0.08);
+        }
+        .auth-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 6px 11px;
+            background: #f4f4f4;
+            border-radius: 20px;
+            color: #444;
+            font-size: 0.68rem;
+            font-weight: 700;
+            letter-spacing: 0.08em;
+            margin-bottom: 20px;
+        }
+        .auth-badge i {
+            font-size: 0.72rem;
+            color: #111;
+        }
+        .auth-card h1 {
+            font: 600 1.8rem/1.15 var(--display);
+            letter-spacing: -0.04em;
+            color: #111;
+            margin-bottom: 10px;
+        }
+        .auth-card p.subtitle {
+            color: var(--muted);
+            font-size: 0.82rem;
+            line-height: 1.6;
+            margin-bottom: 28px;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        .form-group label {
+            display: block;
+            font-size: 0.74rem;
+            font-weight: 700;
+            color: #111;
+            margin-bottom: 8px;
+            letter-spacing: 0.02em;
+        }
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .input-wrapper i.input-icon {
+            position: absolute;
+            left: 14px;
+            color: #888;
+            font-size: 0.85rem;
+            pointer-events: none;
+        }
+        .form-input {
+            width: 100%;
+            padding: 13px 14px 13px 40px;
+            background: #fafafa;
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            font-family: var(--sans);
+            font-size: 0.86rem;
+            color: #111;
+            transition: border-color var(--ease), box-shadow var(--ease), background var(--ease);
+        }
+        .form-input:focus {
+            outline: none;
+            background: #fff;
+            border-color: #111;
+            box-shadow: 0 0 0 3px rgba(17, 17, 17, 0.08);
+        }
+        .form-input::placeholder {
+            color: #aaa;
+        }
+        .alert-box {
+            display: none;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 12px 14px;
+            background: #fff2f2;
+            border: 1px solid #ffc9c9;
+            border-radius: 9px;
+            color: #b3261e;
+            font-size: 0.78rem;
+            line-height: 1.45;
+            margin-bottom: 22px;
+        }
+        .alert-box.show {
+            display: flex;
+        }
+        .alert-box i {
+            font-size: 0.9rem;
+            margin-top: 2px;
+            flex-shrink: 0;
+        }
+        .submit-btn {
+            width: 100%;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            padding: 14px 20px;
+            background: #111;
+            color: #fff;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 0.84rem;
+            letter-spacing: 0.02em;
+            transition: transform var(--ease), background var(--ease), opacity var(--ease);
+        }
+        .submit-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            background: #2a2a2a;
+        }
+        .submit-btn:disabled {
+            opacity: 0.65;
+            cursor: not-allowed;
+        }
+        .auth-footer-notice {
+            margin-top: 24px;
+            padding-top: 20px;
+            border-top: 1px solid #eee;
+            text-align: center;
+            font-size: 0.72rem;
+            color: #777;
+            line-height: 1.5;
+        }
+        .auth-footer-notice a {
+            color: #111;
+            font-weight: 700;
+            text-decoration: underline;
+            text-underline-offset: 3px;
+        }
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 0.8s linear infinite;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <header class="site-header">
+        <a class="brand" href="index.html" aria-label="NWU Software Engineering home">
+            <span class="brand-mark"><img style="border-radius:50%;" src="assets/NWU.jpeg" alt="NWU Logo" height="80" width="80" /></span>
+            <span class="brand-copy"><strong>NWU SE</strong><small>Software Engineering</small></span>
+        </a>
+        <a class="text-button" href="index.html"><i class="fa-solid fa-arrow-left"></i> Back to Student Portal</a>
+    </header>
+
+    <main class="auth-container">
+        <div class="auth-card">
+            <div class="auth-badge">
+                <i class="fa-solid fa-shield-halved"></i>
+                <span>AUTHORIZED PERSONNEL ONLY</span>
+            </div>
+
+            <h1>Class Rep Sign In</h1>
+            <p class="subtitle">Enter your credentials to access the timetable management and updates dashboard.</p>
+
+            <div class="alert-box" id="errorMessage" role="alert">
+                <i class="fa-solid fa-circle-exclamation"></i>
+                <span id="errorText"></span>
+            </div>
+
+            <form id="loginForm" novalidate>
+                <div class="form-group">
+                    <label for="emailInput">Email Address</label>
+                    <div class="input-wrapper">
+                        <i class="fa-regular fa-envelope input-icon"></i>
+                        <input
+                            type="email"
+                            id="emailInput"
+                            class="form-input"
+                            placeholder="classrep@nwu.edu.ng"
+                            autocomplete="email"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="passwordInput">Password</label>
+                    <div class="input-wrapper">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input
+                            type="password"
+                            id="passwordInput"
+                            class="form-input"
+                            placeholder="••••••••••••"
+                            autocomplete="current-password"
+                            required
+                        >
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn" id="submitBtn">
+                    <span id="submitBtnText">Sign In</span>
+                    <i class="fa-solid fa-arrow-right" id="submitBtnIcon"></i>
+                </button>
+            </form>
+
+            <div class="auth-footer-notice">
+                <span>Students do not need an account.</span><br>
+                <a href="index.html">Return to Public Timetable</a>
+            </div>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="class-rep-login.js"></script>
+</body>
+</html>

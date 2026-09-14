@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07111f">
+    <title>Class Rep Dashboard | NWU SE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/jpeg" href="assets/NWU.jpeg">
+    <style>
+        /* Auth protection: hide body content until session verification completes */
+        .auth-cloak {
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.25s ease;
+        }
+        .auth-cloak.ready {
+            opacity: 1;
+            visibility: visible;
+        }
+        .dashboard-container {
+            padding: 40px 0 80px;
+        }
+        .dashboard-header-card {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 32px;
+            box-shadow: 0 12px 35px rgba(17, 17, 17, 0.05);
+            margin-bottom: 28px;
+        }
+        .dash-user-row {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+            padding-bottom: 22px;
+            margin-bottom: 22px;
+            border-bottom: 1px solid #f0f0f0;
+        }
+        .user-identity {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .user-avatar {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #111;
+            color: #fff;
+            display: grid;
+            place-items: center;
+            font-size: 1.1rem;
+        }
+        .user-meta strong {
+            display: block;
+            font-size: 0.95rem;
+            color: #111;
+        }
+        .user-meta span {
+            font-size: 0.74rem;
+            color: var(--muted);
+        }
+        .role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+        }
+        .role-badge.admin {
+            background: #111;
+            color: #fff;
+        }
+        .role-badge.class_rep {
+            background: #eef2f6;
+            color: #244164;
+            border: 1px solid #d8e2ec;
+        }
+        .grid-stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 16px;
+            margin-bottom: 28px;
+        }
+        .stat-card {
+            background: #fafafa;
+            border: 1px solid #eaeaea;
+            border-radius: 14px;
+            padding: 20px;
+        }
+        .stat-card span.label {
+            display: block;
+            font-size: 0.68rem;
+            font-weight: 700;
+            color: var(--muted);
+            letter-spacing: 0.08em;
+            margin-bottom: 8px;
+        }
+        .stat-card strong.value {
+            display: block;
+            font: 600 1.25rem var(--display);
+            color: #111;
+        }
+        .stat-card small.sub {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.72rem;
+            color: #666;
+        }
+        .feature-box {
+            background: #fff;
+            border: 1px solid var(--line);
+            border-radius: 18px;
+            padding: 36px 32px;
+            box-shadow: 0 12px 35px rgba(17, 17, 17, 0.05);
+            margin-bottom: 28px;
+        }
+        .feature-box h2 {
+            font: 600 1.6rem var(--display);
+            letter-spacing: -0.03em;
+            margin: 12px 0 8px;
+            color: #111;
+        }
+        .feature-box p {
+            color: #555;
+            font-size: 0.88rem;
+            line-height: 1.7;
+            max-width: 680px;
+        }
+        .upcoming-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+            gap: 16px;
+            margin-top: 26px;
+        }
+        .upcoming-item {
+            padding: 20px;
+            border: 1px dashed #d5d5d5;
+            border-radius: 12px;
+            background: #fbfbfb;
+        }
+        .upcoming-item i {
+            font-size: 1.25rem;
+            color: #111;
+            margin-bottom: 12px;
+            display: block;
+        }
+        .upcoming-item strong {
+            display: block;
+            font-size: 0.88rem;
+            color: #111;
+            margin-bottom: 6px;
+        }
+        .upcoming-item p {
+            font-size: 0.76rem;
+            color: #777;
+            line-height: 1.5;
+            margin: 0;
+        }
+        .badge-coming-soon {
+            display: inline-block;
+            font-size: 0.62rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            background: #f0f0f0;
+            color: #555;
+            margin-top: 10px;
+            letter-spacing: 0.05em;
+        }
+        .actions-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body class="auth-cloak" id="dashboardBody">
+    <header class="site-header">
+        <a class="brand" href="index.html" aria-label="NWU Software Engineering home">
+            <span class="brand-mark"><img style="border-radius:50%;" src="assets/NWU.jpeg" alt="NWU Logo" height="80" width="80" /></span>
+            <span class="brand-copy"><strong>NWU SE</strong><small>Class Rep Portal</small></span>
+        </a>
+        <div class="header-actions">
+            <a href="index.html" class="quiet-button" style="text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Student View</a>
+            <button class="accent-button compact" id="headerLogoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</button>
+        </div>
+    </header>
+
+    <main class="dashboard-container section-wrap">
+        <!-- Dashboard Profile Header -->
+        <div class="dashboard-header-card">
+            <div class="dash-user-row">
+                <div class="user-identity">
+                    <div class="user-avatar"><i class="fa-solid fa-user-shield"></i></div>
+                    <div class="user-meta">
+                        <strong id="displayEmail">Loading profile...</strong>
+                        <span>Software Engineering Department · Level 200</span>
+                    </div>
+                </div>
+                <div>
+                    <span class="role-badge" id="displayRoleBadge">
+                        <i class="fa-solid fa-circle-check"></i>
+                        <span id="displayRoleText">Authorizing...</span>
+                    </span>
+                </div>
+            </div>
+
+            <div class="grid-stats">
+                <div class="stat-card">
+                    <span class="label">ACCOUNT ROLE</span>
+                    <strong class="value" id="statRoleTitle">—</strong>
+                    <small class="sub">Verified via PostgreSQL Profiles</small>
+                </div>
+                <div class="stat-card">
+                    <span class="label">DATABASE RLS</span>
+                    <strong class="value" style="color: #111;">Active & Enforced</strong>
+                    <small class="sub">Policies protecting all tables</small>
+                </div>
+                <div class="stat-card">
+                    <span class="label">STATUS</span>
+                    <strong class="value" style="color: #111;">Authenticated</strong>
+                    <small class="sub">Valid Supabase session</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- Dashboard Coming Next Placeholder -->
+        <div class="feature-box">
+            <p class="eyebrow"><span></span> MANAGEMENT INTERFACE <span></span></p>
+            <h2>Dashboard coming next</h2>
+            <p>
+                You are securely logged in as an authorized user. The management tools for Class Representatives and Administrators are being assembled in Phase 4.
+                Your role and database operations are already protected directly by Row-Level Security (RLS) in Supabase.
+            </p>
+
+            <div class="upcoming-grid">
+                <div class="upcoming-item">
+                    <i class="fa-regular fa-calendar-days"></i>
+                    <strong>Timetable Management</strong>
+                    <p>Add, edit, reschedule, or update lecture slots, venues, and times.</p>
+                    <span class="badge-coming-soon">NEXT PHASE</span>
+                </div>
+
+                <div class="upcoming-item">
+                    <i class="fa-solid fa-bullhorn"></i>
+                    <strong>SIWES & Announcements</strong>
+                    <p>Broadcast notices, industrial training updates, and urgent alerts.</p>
+                    <span class="badge-coming-soon">NEXT PHASE</span>
+                </div>
+
+                <div class="upcoming-item">
+                    <i class="fa-solid fa-users-gear"></i>
+                    <strong>Representative Access</strong>
+                    <p>Admin control to assign authorized Class Representatives.</p>
+                    <span class="badge-coming-soon">ADMIN FEATURE</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="actions-footer">
+            <a href="index.html" class="text-button"><i class="fa-solid fa-arrow-left"></i> Return to Public Timetable</a>
+            <button class="quiet-button" id="footerLogoutBtn" style="color:#b3261e; border-color: rgba(179,38,30,0.2);">
+                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
+            </button>
+        </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
+    <script src="class-rep-dashboard.js"></script>
+</body>
+</html>
