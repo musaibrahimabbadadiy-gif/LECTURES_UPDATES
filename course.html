@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#07111f">
+    <title>Course Details | NWU SE</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body class="course-page">
+    <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div><div class="grid-background"></div>
+    <header class="site-header">
+        <a class="brand" href="index.html"><span class="brand-mark">SE</span><span class="brand-copy"><strong>NWU SE</strong><small>Software Engineering</small></span></a>
+        <a class="text-button" href="index.html#courses"><i class="fa-solid fa-arrow-left"></i> Back to Courses</a>
+    </header>
+    <main class="course-detail section-wrap">
+        <div class="course-detail-heading"><div><p class="eyebrow">COURSE DETAILS</p><h1 id="courseCode">COS 202</h1><h2 id="courseTitle">Computer Programming II</h2></div><button class="accent-button compact" id="courseShare"><i class="fa-solid fa-arrow-up-from-bracket"></i> Share course</button></div>
+        <nav class="course-tabs" aria-label="Course sections"><button class="active" data-tab="overview">Overview</button><button data-tab="schedule">Schedule</button><button data-tab="resources">Resources</button><button data-tab="updates">Updates</button></nav>
+        <section class="course-panel active" id="overview"><div class="course-summary"><div><span class="micro-label">COURSE INFORMATION</span><h3 id="overviewTitle">Build stronger foundations for the software you create.</h3><p>This course space keeps your lecture details, resources, and important course notes in one focused place.</p></div><div class="detail-stat"><span>Credit units</span><strong id="courseUnits">3</strong></div></div><div class="detail-grid"><div><span class="micro-label">LECTURE DAY</span><strong id="courseDay">Thursday</strong></div><div><span class="micro-label">LECTURE TIME</span><strong id="courseTime">10:00 AM – 12:00 PM</strong></div><div><span class="micro-label">VENUE</span><strong id="courseVenue">FSBMS</strong></div></div></section>
+        <section class="course-panel" id="schedule"><span class="micro-label">SCHEDULE</span><h3>Your next lecture is already in view.</h3><p id="scheduleCopy">Thursday · 10:00 AM – 12:00 PM · FSBMS</p><button class="quiet-button calendar-action" id="addCourseCalendar"><i class="fa-regular fa-calendar-plus"></i> Add to calendar</button></section>
+        <section class="course-panel" id="resources"><span class="micro-label">COURSE MATERIALS</span><h3>Everything you need to keep moving.</h3><div class="material-grid" id="materialGrid"></div></section>
+        <section class="course-panel" id="updates"><span class="micro-label">UPDATES</span><h3>Stay close to what matters.</h3><p>Announcements and course-specific updates will appear here throughout the semester.</p></section>
+    </main>
+    <div class="modal-backdrop" id="shareModal" aria-hidden="true"><div class="share-modal"><button class="close-button" id="closeShare"><i class="fa-solid fa-xmark"></i></button><p class="eyebrow">SHARE</p><h2>Share this course with your classmates.</h2><p class="share-context" id="shareContext"></p><div class="share-options"><button data-share="whatsapp"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></button><button data-share="facebook"><i class="fa-brands fa-facebook-f"></i><span>Facebook</span></button><button data-share="x"><i class="fa-brands fa-x-twitter"></i><span>X / Twitter</span></button><button data-share="telegram"><i class="fa-brands fa-telegram"></i><span>Telegram</span></button><button data-share="copy"><i class="fa-regular fa-copy"></i><span>Copy Link</span></button><button data-share="more"><i class="fa-solid fa-ellipsis"></i><span>More</span></button></div></div></div>
+    <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMessage"></span></div>
+    <script src="course.js"></script>
+</body>
+</html>
