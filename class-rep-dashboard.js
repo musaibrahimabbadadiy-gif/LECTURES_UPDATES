@@ -1549,18 +1549,18 @@
                 } else {
                     const toggleRoleLabel = isAdmin ? 'Demote to Rep' : 'Promote to Admin';
                     const toggleRoleIcon = isAdmin ? 'fa-arrow-down' : 'fa-shield-halved';
-                    
-                    const roleBtn = `<button class="btn-action-role" data-action="change-role" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" data-role="${escapeHtml(u.role)}" title="${toggleRoleLabel}">
+
+                    const roleBtn = `<button class="btn-action btn-action-role" data-action="change-role" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" data-role="${escapeHtml(u.role)}" title="${toggleRoleLabel}">
                         <i class="fa-solid ${toggleRoleIcon}"></i> ${isAdmin ? 'Demote' : 'Make Admin'}
                     </button>`;
 
                     const deleteBtn = !isAdmin
-                        ? `<button class="btn-action-delete" data-action="delete" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" title="Delete Class Rep">
+                        ? `<button class="btn-action btn-action-delete" data-action="delete" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" title="Delete Class Rep">
                             <i class="fa-solid fa-trash-can"></i>
                            </button>`
                         : '';
 
-                    actionsHtml = `<div class="timetable-actions" style="justify-content: flex-end;">${roleBtn}${deleteBtn}</div>`;
+                    actionsHtml = `<div class="actions-wrap" style="justify-content: flex-end;">${roleBtn}${deleteBtn}</div>`;
                 }
 
                 return `
@@ -1601,17 +1601,17 @@
                 if (isYou) {
                     actionsHtml = `<span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">Your current active session</span>`;
                 } else {
-                    const roleBtn = `<button class="btn-action-role" data-action="change-role" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" data-role="${escapeHtml(u.role)}">
+                    const roleBtn = `<button class="btn-action btn-action-role" data-action="change-role" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" data-role="${escapeHtml(u.role)}">
                         <i class="fa-solid ${isAdmin ? 'fa-arrow-down' : 'fa-shield-halved'}"></i> ${isAdmin ? 'Demote to Rep' : 'Promote to Admin'}
                     </button>`;
 
                     const deleteBtn = !isAdmin
-                        ? `<button class="btn-action-delete" data-action="delete" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" title="Delete Class Rep">
-                            <i class="fa-solid fa-trash-can"></i> Delete
+                        ? `<button class="btn-action btn-action-delete" data-action="delete" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" title="Delete Class Rep">
+                            <i class="fa-solid fa-trash-can"></i>
                            </button>`
                         : '';
 
-                    actionsHtml = `<div class="timetable-actions" style="margin-top: 12px;">${roleBtn}${deleteBtn}</div>`;
+                    actionsHtml = `<div class="actions-wrap" style="margin-top: 12px;">${roleBtn}${deleteBtn}</div>`;
                 }
 
                 return `
