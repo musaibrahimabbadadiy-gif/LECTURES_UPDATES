@@ -1,8 +1,4 @@
-const updates = [
-  { category: "SIWES UPDATE", title: "Registration Information", description: "Important information regarding SIWES registration and required student documentation.", date: "September 2026" },
-  { category: "DEPARTMENT NOTICE", title: "Placement Preparation", description: "A practical checklist to help you prepare for your industrial placement and first week.", date: "August 2026" },
-  { category: "STUDENT GUIDE", title: "Your SIWES Logbook", description: "Keep your weekly records clear, consistent, and ready for assessment.", date: "August 2026" }
-];
+// No static/hard-coded announcement data — Supabase is the sole source of truth.
 
 let fetchedTimetable = {};
 let fetchedCourses = [];
@@ -113,8 +109,40 @@ function renderCourses() {
   `).join("");
 }
 
-function renderUpdates() {
-  $("#updatesList").innerHTML = updates.map((update, index) => `
+let fetchedAnnouncements = [];
+
+// Renders published announcements from Supabase, a clean empty state, or a fetch-error state.
+// No hard-coded fallback data — Supabase is the sole source of truth.
+function renderUpdates(state) {
+  const updatesList = $("#updatesList");
+  if (!updatesList) return;
+
+  if (state.mode === "error") {
+    fetchedAnnouncements = [];
+    updatesList.innerHTML = `
+      <div style="text-align:center; padding:48px; color:var(--muted);">
+        <p style="margin-bottom:14px;">Unable to load announcements.</p>
+        <button class="accent-button compact" id="retryAnnouncementsBtn" style="cursor:pointer;">
+          <i class="fa-solid fa-rotate-right"></i> Retry
+        </button>
+      </div>`;
+    $("#retryAnnouncementsBtn")?.addEventListener("click", fetchAnnouncements);
+    return;
+  }
+
+  if (state.mode === "empty") {
+    fetchedAnnouncements = [];
+    updatesList.innerHTML = `
+      <div style="text-align:center; padding:48px; color:var(--muted); font-size:0.9rem;">
+        <i class="fa-regular fa-bell-slash" style="font-size:1.8rem; margin-bottom:12px; display:block;"></i>
+        No announcements at this time.
+      </div>`;
+    return;
+  }
+
+  // mode === "data"
+  fetchedAnnouncements = state.items;
+  updatesList.innerHTML = state.items.map((update, index) => `
     <article class="update-item ${index === 0 ? "featured" : ""}">
       <time class="update-date">${update.date}</time>
       <div class="update-content">
@@ -128,6 +156,50 @@ function renderUpdates() {
       </div>
     </article>
   `).join("");
+}
+
+async function fetchAnnouncements() {
+  const updatesList = $("#updatesList");
+  if (updatesList) {
+    updatesList.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:0.85rem;">
+      <i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i> Loading announcements...
+    </div>`;
+  }
+
+  try {
+    if (typeof db === "undefined" || !db) {
+      throw new Error("Supabase client not initialised.");
+    }
+    // RLS ensures only is_published = true rows are returned to anonymous users
+    const { data, error } = await db
+      .from("announcements")
+      .select("id, title, content, category, published_at, created_at")
+      .order("published_at", { ascending: false, nullsFirst: false });
+
+    if (error) throw error;
+
+    if (!data || data.length === 0) {
+      renderUpdates({ mode: "empty" });
+      return;
+    }
+
+    renderUpdates({
+      mode: "data",
+      items: data.map(a => ({
+        category: (a.category || "GENERAL").toUpperCase(),
+        title: a.title || "Untitled",
+        description: a.content || "",
+        date: a.published_at
+          ? new Date(a.published_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+          : (a.created_at
+            ? new Date(a.created_at).toLocaleDateString("en-US", { month: "long", year: "numeric" })
+            : "")
+      }))
+    });
+  } catch (err) {
+    console.error("fetchAnnouncements failed:", err);
+    renderUpdates({ mode: "error" });
+  }
 }
 
 function showToast(message) {
@@ -352,7 +424,7 @@ if (coursesSection && timetableSection) {
   timetableSection.parentNode.insertBefore(coursesSection, timetableSection);
 }
 
-renderUpdates();
+fetchAnnouncements();
 fetchAndRender();
 
 // Event listeners
@@ -367,10 +439,11 @@ scheduleList?.addEventListener("click", event => {
 $$(".share-trigger").forEach(button => button.addEventListener("click", () => openShareModal(button.dataset.shareType)));
 $$('[data-scroll="timetable"]').forEach(button => button.addEventListener("click", () => $("#timetable").scrollIntoView({ behavior: "smooth" })));
 
-$("#updatesList").addEventListener("click", event => {
+$("#updatesList")?.addEventListener("click", event => {
   const button = event.target.closest(".update-share");
   if (!button) return;
-  const update = updates[button.dataset.index];
+  const update = fetchedAnnouncements[button.dataset.index];
+  if (!update) return;
   openShareModal("update", {
     text: `${update.title}\n\n${update.description}\n\nRead more on the NWU SE Student Platform:`,
     url: window.location.href + "#updates"

@@ -4,79 +4,117 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#07111f">
-    <title>Class Rep Dashboard | NWU SE</title>
+    <meta name="description" content="Class Representative and Administrator dashboard for NWU Software Engineering Level 200.">
+    <title>Dashboard | NWU SE</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
-    <link rel="stylesheet" href="styles.css">
     <link rel="icon" type="image/jpeg" href="assets/NWU.jpeg">
     <style>
-        /* Auth protection: hide body content until session verification completes */
+        /* ── Auth protection ── */
         .auth-cloak {
             opacity: 0;
             visibility: hidden;
-            transition: opacity 0.25s ease;
+            transition: opacity 0.3s ease;
         }
         .auth-cloak.ready {
             opacity: 1;
             visibility: visible;
         }
-        .dashboard-container {
-            padding: 40px 0 80px;
+
+        /* ── Reset & base ── */
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+        html { scroll-behavior: smooth; }
+        body {
+            min-width: 320px;
+            background: #f8f9fb;
+            color: #111;
+            font-family: "DM Sans", sans-serif;
+            line-height: 1.5;
+            overflow-x: hidden;
         }
-        .dashboard-header-card {
-            background: #fff;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 32px;
-            box-shadow: 0 12px 35px rgba(17, 17, 17, 0.05);
-            margin-bottom: 28px;
+
+        /* ── Dashboard layout ── */
+        .dash-layout {
+            display: grid;
+            grid-template-columns: 260px 1fr;
+            grid-template-rows: auto 1fr;
+            min-height: 100vh;
         }
-        .dash-user-row {
+
+        /* ── Top header ── */
+        .dash-topbar {
+            grid-column: 1 / -1;
             display: flex;
             align-items: center;
             justify-content: space-between;
             gap: 20px;
-            flex-wrap: wrap;
-            padding-bottom: 22px;
-            margin-bottom: 22px;
-            border-bottom: 1px solid #f0f0f0;
+            padding: 0 32px;
+            height: 68px;
+            background: #fff;
+            border-bottom: 1px solid #e8e8e8;
+            z-index: 10;
         }
-        .user-identity {
+        .dash-topbar-left {
             display: flex;
             align-items: center;
             gap: 14px;
         }
-        .user-avatar {
-            width: 44px;
-            height: 44px;
+        .dash-topbar-left .brand-link {
+            display: flex;
+            align-items: center;
+            gap: 11px;
+            text-decoration: none;
+            color: inherit;
+        }
+        .dash-topbar-left .brand-logo {
+            width: 40px;
+            height: 40px;
             border-radius: 12px;
-            background: #111;
-            color: #fff;
+            object-fit: cover;
+        }
+        .dash-topbar-left .brand-text {
             display: grid;
-            place-items: center;
-            font-size: 1.1rem;
+            gap: 1px;
         }
-        .user-meta strong {
-            display: block;
-            font-size: 0.95rem;
-            color: #111;
+        .dash-topbar-left .brand-text strong {
+            font-family: "Space Grotesk", sans-serif;
+            font-size: 0.88rem;
+            font-weight: 700;
+            letter-spacing: 0.02em;
         }
-        .user-meta span {
-            font-size: 0.74rem;
-            color: var(--muted);
+        .dash-topbar-left .brand-text small {
+            color: #888;
+            font-size: 0.6rem;
+            letter-spacing: 0.06em;
+            font-weight: 500;
+        }
+        .dash-topbar-right {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+        }
+        .dash-topbar-right .user-email {
+            font-size: 0.78rem;
+            color: #555;
+            font-weight: 500;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
         }
         .role-badge {
             display: inline-flex;
             align-items: center;
-            gap: 6px;
-            padding: 5px 12px;
+            gap: 5px;
+            padding: 4px 10px;
             border-radius: 20px;
-            font-size: 0.7rem;
+            font-size: 0.62rem;
             font-weight: 700;
             letter-spacing: 0.05em;
             text-transform: uppercase;
+            white-space: nowrap;
         }
         .role-badge.admin {
             background: #111;
@@ -87,197 +125,1511 @@
             color: #244164;
             border: 1px solid #d8e2ec;
         }
-        .grid-stats {
+        .btn-logout {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 8px 14px;
+            background: transparent;
+            color: #b3261e;
+            border: 1px solid rgba(179, 38, 30, 0.18);
+            border-radius: 8px;
+            font: 600 0.72rem "DM Sans", sans-serif;
+            cursor: pointer;
+            transition: background 0.2s, border-color 0.2s;
+        }
+        .btn-logout:hover {
+            background: rgba(179, 38, 30, 0.06);
+            border-color: rgba(179, 38, 30, 0.35);
+        }
+        .hamburger-btn {
+            display: none;
+            width: 38px;
+            height: 38px;
+            background: transparent;
+            border: 1px solid #e3e3e3;
+            border-radius: 10px;
+            color: #111;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .hamburger-btn:hover { background: #f4f4f4; }
+
+        /* ── Sidebar ── */
+        .dash-sidebar {
+            background: #fff;
+            border-right: 1px solid #e8e8e8;
+            padding: 28px 0;
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+        }
+        .sidebar-section-label {
+            padding: 0 24px;
+            margin-bottom: 8px;
+            color: #999;
+            font-size: 0.58rem;
+            font-weight: 700;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+        }
+        .sidebar-nav {
+            list-style: none;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            padding: 0 12px;
+        }
+        .sidebar-nav li { display: block; }
+        .nav-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            width: 100%;
+            padding: 11px 16px;
+            background: transparent;
+            border: none;
+            border-radius: 10px;
+            color: #555;
+            font: 500 0.82rem "DM Sans", sans-serif;
+            cursor: pointer;
+            transition: background 0.2s, color 0.2s;
+            text-align: left;
+        }
+        .nav-item:hover {
+            background: #f5f5f5;
+            color: #111;
+        }
+        .nav-item.active {
+            background: #111;
+            color: #fff;
+        }
+        .nav-item i {
+            width: 18px;
+            text-align: center;
+            font-size: 0.88rem;
+        }
+        .sidebar-bottom {
+            margin-top: auto;
+            padding: 24px;
+            border-top: 1px solid #eee;
+        }
+        .sidebar-bottom .student-link {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: #888;
+            font-size: 0.76rem;
+            font-weight: 500;
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+        .sidebar-bottom .student-link:hover { color: #111; }
+
+        /* ── Main content ── */
+        .dash-main {
+            padding: 32px 36px 60px;
+            overflow-y: auto;
+            background: #f8f9fb;
+        }
+
+        /* ── Section panels ── */
+        .dash-section {
+            display: none;
+            animation: dashReveal 0.35s ease both;
+        }
+        .dash-section.active { display: block; }
+        @keyframes dashReveal {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: none; }
+        }
+
+        /* ── Section header ── */
+        .section-title {
+            font: 600 1.6rem "Space Grotesk", sans-serif;
+            letter-spacing: -0.03em;
+            color: #111;
+        }
+        .section-subtitle {
+            margin-top: 4px;
+            color: #888;
+            font-size: 0.8rem;
+        }
+
+        /* ── Stat cards grid ── */
+        .stats-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
             gap: 16px;
-            margin-bottom: 28px;
+            margin-top: 28px;
         }
         .stat-card {
-            background: #fafafa;
+            background: #fff;
             border: 1px solid #eaeaea;
             border-radius: 14px;
-            padding: 20px;
+            padding: 22px 24px;
+            transition: box-shadow 0.25s, transform 0.25s;
         }
-        .stat-card span.label {
-            display: block;
-            font-size: 0.68rem;
-            font-weight: 700;
-            color: var(--muted);
-            letter-spacing: 0.08em;
-            margin-bottom: 8px;
+        .stat-card:hover {
+            box-shadow: 0 8px 24px rgba(17, 17, 17, 0.06);
+            transform: translateY(-2px);
         }
-        .stat-card strong.value {
-            display: block;
-            font: 600 1.25rem var(--display);
-            color: #111;
-        }
-        .stat-card small.sub {
-            display: block;
-            margin-top: 6px;
-            font-size: 0.72rem;
-            color: #666;
-        }
-        .feature-box {
-            background: #fff;
-            border: 1px solid var(--line);
-            border-radius: 18px;
-            padding: 36px 32px;
-            box-shadow: 0 12px 35px rgba(17, 17, 17, 0.05);
-            margin-bottom: 28px;
-        }
-        .feature-box h2 {
-            font: 600 1.6rem var(--display);
-            letter-spacing: -0.03em;
-            margin: 12px 0 8px;
-            color: #111;
-        }
-        .feature-box p {
-            color: #555;
-            font-size: 0.88rem;
-            line-height: 1.7;
-            max-width: 680px;
-        }
-        .upcoming-grid {
+        .stat-card .stat-icon-wrap {
+            width: 40px;
+            height: 40px;
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
-            gap: 16px;
-            margin-top: 26px;
+            place-items: center;
+            border-radius: 10px;
+            font-size: 1rem;
+            margin-bottom: 14px;
         }
-        .upcoming-item {
-            padding: 20px;
-            border: 1px dashed #d5d5d5;
-            border-radius: 12px;
-            background: #fbfbfb;
+        .stat-card .stat-icon-wrap.courses-icon {
+            background: rgba(59, 130, 246, 0.1);
+            color: #3b82f6;
         }
-        .upcoming-item i {
-            font-size: 1.25rem;
-            color: #111;
-            margin-bottom: 12px;
+        .stat-card .stat-icon-wrap.timetable-icon {
+            background: rgba(16, 185, 129, 0.1);
+            color: #10b981;
+        }
+        .stat-card .stat-icon-wrap.announcements-icon {
+            background: rgba(245, 158, 11, 0.1);
+            color: #f59e0b;
+        }
+        .stat-card .stat-label {
             display: block;
-        }
-        .upcoming-item strong {
-            display: block;
-            font-size: 0.88rem;
-            color: #111;
+            font-size: 0.66rem;
+            font-weight: 700;
+            color: #999;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
             margin-bottom: 6px;
         }
-        .upcoming-item p {
-            font-size: 0.76rem;
-            color: #777;
-            line-height: 1.5;
-            margin: 0;
+        .stat-card .stat-value {
+            display: block;
+            font: 600 1.75rem "Space Grotesk", sans-serif;
+            color: #111;
+            line-height: 1.1;
         }
-        .badge-coming-soon {
+        .stat-card .stat-sub {
+            display: block;
+            margin-top: 6px;
+            font-size: 0.7rem;
+            color: #888;
+        }
+
+        /* ── Loading / error states ── */
+        .stat-value.loading {
+            background: linear-gradient(90deg, #eee 25%, #f5f5f5 50%, #eee 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 6px;
+            width: 48px;
+            height: 28px;
+            display: block;
+        }
+        @keyframes shimmer {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+
+        /* ── Placeholder section content ── */
+        .placeholder-card {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 16px;
+            padding: 40px 32px;
+            margin-top: 24px;
+        }
+        .placeholder-card .placeholder-icon {
+            width: 52px;
+            height: 52px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            background: #f5f5f5;
+            color: #aaa;
+            font-size: 1.3rem;
+            margin-bottom: 18px;
+        }
+        .placeholder-card h3 {
+            font: 600 1.15rem "Space Grotesk", sans-serif;
+            letter-spacing: -0.02em;
+            color: #111;
+        }
+        .placeholder-card p {
+            margin-top: 8px;
+            color: #777;
+            font-size: 0.84rem;
+            line-height: 1.7;
+            max-width: 560px;
+        }
+        .placeholder-badge {
             display: inline-block;
-            font-size: 0.62rem;
+            margin-top: 16px;
+            font-size: 0.6rem;
             font-weight: 700;
-            padding: 3px 8px;
+            padding: 3px 9px;
             border-radius: 6px;
             background: #f0f0f0;
-            color: #555;
-            margin-top: 10px;
+            color: #666;
             letter-spacing: 0.05em;
         }
-        .actions-footer {
+
+        /* ── Error panel ── */
+        .error-panel {
+            display: none;
+            background: #fff;
+            border: 1px solid #fecaca;
+            border-radius: 14px;
+            padding: 28px 24px;
+            margin-top: 28px;
+            text-align: center;
+        }
+        .error-panel.show { display: block; }
+        .error-panel i {
+            font-size: 1.6rem;
+            color: #ef4444;
+            margin-bottom: 12px;
+        }
+        .error-panel p {
+            color: #555;
+            font-size: 0.84rem;
+            margin-bottom: 16px;
+        }
+        .btn-retry {
+            display: inline-flex;
+            align-items: center;
+            gap: 7px;
+            padding: 10px 18px;
+            background: #111;
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font: 600 0.76rem "DM Sans", sans-serif;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .btn-retry:hover { background: #333; }
+
+        /* ── Quick info row ── */
+        .info-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 16px;
+            margin-top: 28px;
+        }
+        .info-card {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 14px;
+            padding: 22px 24px;
+        }
+        .info-card .info-label {
+            font-size: 0.64rem;
+            font-weight: 700;
+            color: #999;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            margin-bottom: 6px;
+        }
+        .info-card .info-value {
+            font: 500 0.92rem "Space Grotesk", sans-serif;
+            color: #111;
+        }
+        .info-card .info-sub {
+            margin-top: 4px;
+            font-size: 0.68rem;
+            color: #aaa;
+        }
+
+        /* ── Section header with action ── */
+        .section-header-wrap {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 16px;
+            margin-bottom: 24px;
+            flex-wrap: wrap;
+        }
+        .section-header-wrap .section-title {
+            margin-bottom: 0;
+        }
+        .section-header-wrap .section-subtitle {
+            margin-top: 4px;
+            margin-bottom: 0;
+        }
+        .section-header-actions {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        /* ── Buttons ── */
+        .btn-primary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 18px;
+            background: #111;
+            color: #fff;
+            border: 1px solid #111;
+            border-radius: 9px;
+            font: 600 0.82rem "DM Sans", sans-serif;
+            cursor: pointer;
+            text-decoration: none;
+            transition: background 0.2s ease, transform 0.15s ease, box-shadow 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn-primary:hover {
+            background: #2a2a2a;
+            border-color: #2a2a2a;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+        .btn-primary:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        .btn-secondary {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 16px;
+            background: #fff;
+            color: #444;
+            border: 1px solid #e0e0e0;
+            border-radius: 9px;
+            font: 600 0.82rem "DM Sans", sans-serif;
+            cursor: pointer;
+            transition: background 0.2s ease, border-color 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn-secondary:hover {
+            background: #f7f7f7;
+            border-color: #ccc;
+            color: #111;
+        }
+        .btn-danger {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 9px 18px;
+            background: #dc2626;
+            color: #fff;
+            border: 1px solid #dc2626;
+            border-radius: 9px;
+            font: 600 0.82rem "DM Sans", sans-serif;
+            cursor: pointer;
+            transition: background 0.2s ease, box-shadow 0.2s ease;
+            white-space: nowrap;
+        }
+        .btn-danger:hover {
+            background: #b91c1c;
+            border-color: #b91c1c;
+            box-shadow: 0 4px 12px rgba(220,38,38,0.25);
+        }
+        .btn-danger:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* ── Timetable box & table ── */
+        .timetable-box {
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 14px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.02);
+            overflow: hidden;
+            margin-top: 18px;
+        }
+        .timetable-table-wrap {
+            overflow-x: auto;
+            width: 100%;
+        }
+        .timetable-table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+            font-size: 0.86rem;
+        }
+        .timetable-table th {
+            background: #fafafa;
+            color: #666;
+            font: 600 0.72rem "Space Grotesk", sans-serif;
+            text-transform: uppercase;
+            letter-spacing: 0.06em;
+            padding: 14px 20px;
+            border-bottom: 1px solid #eee;
+            white-space: nowrap;
+        }
+        .timetable-table td {
+            padding: 16px 20px;
+            border-bottom: 1px solid #f0f0f0;
+            vertical-align: middle;
+            color: #222;
+        }
+        .timetable-table tr:last-child td {
+            border-bottom: none;
+        }
+        .timetable-table tbody tr {
+            transition: background 0.15s ease;
+        }
+        .timetable-table tbody tr:hover {
+            background: #fbfbfd;
+        }
+
+        /* ── Table row data items ── */
+        .course-cell {
+            display: flex;
+            flex-direction: column;
+            gap: 3px;
+        }
+        .course-code-badge {
+            display: inline-block;
+            align-self: flex-start;
+            font-family: "Space Grotesk", sans-serif;
+            font-weight: 700;
+            font-size: 0.8rem;
+            color: #0f172a;
+            background: #f1f5f9;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.02em;
+        }
+        .course-title-text {
+            font-size: 0.84rem;
+            color: #475569;
+            font-weight: 500;
+        }
+        .day-pill {
+            display: inline-flex;
+            align-items: center;
+            font-size: 0.78rem;
+            font-weight: 600;
+            padding: 4px 10px;
+            border-radius: 20px;
+            background: #eef2ff;
+            color: #4338ca;
+            white-space: nowrap;
+        }
+        .time-text {
+            font-family: "DM Sans", sans-serif;
+            font-weight: 600;
+            font-size: 0.84rem;
+            color: #1e293b;
+            display: flex;
+            align-items: center;
+            gap: 7px;
+            white-space: nowrap;
+        }
+        .time-text i {
+            color: #94a3b8;
+            font-size: 0.82rem;
+        }
+        .venue-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 0.82rem;
+            color: #334155;
+            background: #f8fafc;
+            border: 1px solid #e2e8f0;
+            padding: 4px 10px;
+            border-radius: 8px;
+            max-width: 220px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .venue-pill i {
+            color: #64748b;
+            font-size: 0.74rem;
+        }
+
+        /* ── Action buttons ── */
+        .actions-wrap {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .btn-action {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            padding: 6px 11px;
+            border-radius: 7px;
+            font-size: 0.76rem;
+            font-weight: 600;
+            cursor: pointer;
+            border: 1px solid transparent;
+            transition: all 0.15s ease;
+            background: #fff;
+        }
+        .btn-action-edit {
+            color: #0284c7;
+            border-color: #bae6fd;
+            background: #f0f9ff;
+        }
+        .btn-action-edit:hover {
+            background: #0284c7;
+            color: #fff;
+            border-color: #0284c7;
+        }
+        .btn-action-delete {
+            color: #dc2626;
+            border-color: #fecaca;
+            background: #fef2f2;
+        }
+        .btn-action-delete:hover {
+            background: #dc2626;
+            color: #fff;
+            border-color: #dc2626;
+        }
+
+        /* ── Mobile timetable cards (hidden on desktop) ── */
+        .timetable-mobile-cards {
+            display: none;
+            flex-direction: column;
+            gap: 12px;
+            padding: 16px;
+        }
+        .timetable-item-card {
+            background: #fff;
+            border: 1px solid #e8e8e8;
+            border-radius: 12px;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+        }
+        .timetable-item-card .card-top {
+            display: flex;
+            align-items: flex-start;
+            justify-content: space-between;
+            gap: 10px;
+        }
+        .timetable-item-card .card-course-info {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .timetable-item-card .card-course-title {
+            font-size: 0.88rem;
+            font-weight: 600;
+            color: #111;
+        }
+        .timetable-item-card .card-details {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            padding: 10px 0;
+            border-top: 1px solid #f1f5f9;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .timetable-item-card .card-detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+        .timetable-item-card .card-detail-item .label {
+            font-size: 0.62rem;
+            color: #94a3b8;
+            text-transform: uppercase;
+            font-weight: 700;
+            letter-spacing: 0.05em;
+        }
+        .timetable-item-card .card-actions {
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 8px;
+        }
+        .timetable-item-card .btn-action {
+            padding: 7px 14px;
+            font-size: 0.78rem;
+        }
+
+        /* ── Loading & Empty states ── */
+        .timetable-loading-state {
+            display: none;
+            padding: 60px 20px;
+            text-align: center;
+            background: #fff;
+            border: 1px solid #eaeaea;
+            border-radius: 14px;
+            margin-top: 18px;
+        }
+        .timetable-loading-state.show { display: block; }
+        .timetable-loading-state .spinner {
+            width: 36px;
+            height: 36px;
+            border: 3px solid #f1f5f9;
+            border-top-color: #111;
+            border-radius: 50%;
+            animation: spin 0.8s linear infinite;
+            margin: 0 auto 14px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        .timetable-loading-state p {
+            color: #64748b;
+            font-size: 0.86rem;
+            font-weight: 500;
+        }
+
+        .timetable-empty-state {
+            display: none;
+            padding: 60px 24px;
+            text-align: center;
+            background: #fff;
+            border: 1px dashed #cbd5e1;
+            border-radius: 14px;
+            margin-top: 18px;
+        }
+        .timetable-empty-state .empty-icon {
+            width: 54px;
+            height: 54px;
+            border-radius: 16px;
+            background: #f8fafc;
+            color: #94a3b8;
+            font-size: 1.5rem;
+            display: grid;
+            place-items: center;
+            margin: 0 auto 16px;
+        }
+        .timetable-empty-state h3 {
+            font: 600 1.15rem "Space Grotesk", sans-serif;
+            color: #0f172a;
+            margin-bottom: 6px;
+        }
+        .timetable-empty-state p {
+            font-size: 0.84rem;
+            color: #64748b;
+            max-width: 420px;
+            margin: 0 auto 20px;
+            line-height: 1.6;
+        }
+
+        /* ── Modals ── */
+        .dash-modal-backdrop {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 23, 42, 0.45);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            padding: 20px;
+            overflow-y: auto;
+            place-items: center;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+        .dash-modal-backdrop.show {
+            display: grid;
+            opacity: 1;
+        }
+        .dash-modal {
+            background: #fff;
+            border-radius: 16px;
+            width: 100%;
+            max-width: 520px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+            overflow: hidden;
+            transform: translateY(12px) scale(0.98);
+            transition: transform 0.2s cubic-bezier(.2,.75,.25,1);
+        }
+        .dash-modal-backdrop.show .dash-modal {
+            transform: translateY(0) scale(1);
+        }
+        .dash-modal-sm {
+            max-width: 440px;
+        }
+        .dash-modal-header {
             display: flex;
             align-items: center;
             justify-content: space-between;
-            gap: 16px;
-            flex-wrap: wrap;
+            padding: 20px 24px;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .dash-modal-header h3 {
+            font: 600 1.1rem "Space Grotesk", sans-serif;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+        }
+        .btn-modal-close {
+            background: none;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            color: #94a3b8;
+            cursor: pointer;
+            display: grid;
+            place-items: center;
+            transition: all 0.15s ease;
+            font-size: 0.95rem;
+        }
+        .btn-modal-close:hover {
+            background: #f1f5f9;
+            color: #0f172a;
+        }
+        .dash-modal-body {
+            padding: 22px 24px;
+        }
+        .dash-modal-footer {
+            padding: 16px 24px;
+            background: #fafafa;
+            border-top: 1px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            gap: 12px;
+        }
+
+        /* Delete modal specific */
+        .dash-modal-header.delete-header {
+            border-bottom: none;
+            padding-bottom: 4px;
+            flex-direction: column;
+            align-items: flex-start;
+            position: relative;
+        }
+        .dash-modal-header.delete-header .btn-modal-close {
+            position: absolute;
+            top: 18px;
+            right: 20px;
+        }
+        .delete-icon-wrap {
+            width: 44px;
+            height: 44px;
+            border-radius: 12px;
+            background: #fef2f2;
+            color: #dc2626;
+            display: grid;
+            place-items: center;
+            font-size: 1.15rem;
+            margin-bottom: 12px;
+        }
+        .delete-message {
+            font-size: 0.95rem;
+            color: #1e293b;
+            font-weight: 600;
+            line-height: 1.5;
+            margin-bottom: 8px;
+        }
+        .delete-hint {
+            font-size: 0.8rem;
+            color: #64748b;
+            line-height: 1.5;
+        }
+
+        /* ── Forms ── */
+        .dash-form-group {
+            margin-bottom: 18px;
+        }
+        .dash-form-group:last-child {
+            margin-bottom: 0;
+        }
+        .dash-form-label {
+            display: block;
+            font-size: 0.78rem;
+            font-weight: 600;
+            color: #334155;
+            margin-bottom: 7px;
+        }
+        .dash-form-label .required {
+            color: #dc2626;
+        }
+        .dash-form-control {
+            width: 100%;
+            padding: 10px 14px;
+            background: #fff;
+            border: 1px solid #cbd5e1;
+            border-radius: 8px;
+            font: 500 0.86rem "DM Sans", sans-serif;
+            color: #0f172a;
+            outline: none;
+            transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        }
+        .dash-form-control:focus {
+            border-color: #111;
+            box-shadow: 0 0 0 3px rgba(17,17,17,0.08);
+        }
+        select.dash-form-control {
+            appearance: none;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b' stroke-width='2'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' d='M19 9l-7 7-7-7'/%3E%3C/svg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 16px 16px;
+            padding-right: 36px;
+            cursor: pointer;
+        }
+        .dash-form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 14px;
+        }
+        textarea.dash-form-control {
+            min-height: 110px;
+            resize: vertical;
+            line-height: 1.5;
+        }
+        .dash-form-checkbox-wrap {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 6px;
+            cursor: pointer;
+            user-select: none;
+        }
+        .dash-form-checkbox-wrap input[type="checkbox"] {
+            width: 18px;
+            height: 18px;
+            accent-color: #111;
+            cursor: pointer;
+        }
+        .dash-form-checkbox-wrap span {
+            font-size: 0.84rem;
+            font-weight: 500;
+            color: #334155;
+        }
+        .dash-form-alert {
+            background: #fef2f2;
+            border: 1px solid #fecaca;
+            color: #b91c1c;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.8rem;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* ── Announcements Specific Styles ── */
+        .cat-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.68rem;
+            font-weight: 700;
+            padding: 3px 8px;
+            border-radius: 6px;
+            letter-spacing: 0.03em;
+            text-transform: uppercase;
+            white-space: nowrap;
+        }
+        .cat-pill.general { background: #f1f5f9; color: #475569; }
+        .cat-pill.timetable { background: #eff6ff; color: #1d4ed8; }
+        .cat-pill.academic { background: #f0fdf4; color: #15803d; }
+        .cat-pill.department { background: #faf5ff; color: #7e22ce; }
+        .cat-pill.siwes { background: #fff7ed; color: #c2410c; }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 9px;
+            border-radius: 20px;
+            white-space: nowrap;
+        }
+        .status-pill.published {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+        }
+        .status-pill.draft {
+            background: #fefce8;
+            color: #a16207;
+            border: 1px solid #fef08a;
+        }
+        .status-pill i {
+            font-size: 0.58rem;
+        }
+
+        .btn-action-toggle-publish.publish {
+            color: #047857;
+            background: #ecfdf5;
+            border-color: #a7f3d0;
+        }
+        .btn-action-toggle-publish.publish:hover {
+            background: #047857;
+            color: #fff;
+            border-color: #047857;
+        }
+        .btn-action-toggle-publish.unpublish {
+            color: #b45309;
+            background: #fefce8;
+            border-color: #fde68a;
+        }
+        .btn-action-toggle-publish.unpublish:hover {
+            background: #b45309;
+            color: #fff;
+            border-color: #b45309;
+        }
+
+        .announcement-content-preview {
+            font-size: 0.78rem;
+            color: #64748b;
+            margin-top: 3px;
+            line-height: 1.4;
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+            max-width: 320px;
+        }
+        .announcement-meta-date {
+            font-size: 0.78rem;
+            color: #64748b;
+            white-space: nowrap;
+        }
+
+        /* ── Toasts ── */
+        .toast-container {
+            position: fixed;
+            bottom: 24px;
+            right: 24px;
+            z-index: 200;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-width: 380px;
+            pointer-events: none;
+        }
+        .toast-message {
+            pointer-events: auto;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #111;
+            color: #fff;
+            border-radius: 10px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            font-size: 0.84rem;
+            font-weight: 500;
+            transform: translateY(16px);
+            opacity: 0;
+            transition: all 0.25s cubic-bezier(.2,.75,.25,1);
+        }
+        .toast-message.show {
+            transform: translateY(0);
+            opacity: 1;
+        }
+        .toast-message.success {
+            background: #0f172a;
+            border-left: 4px solid #10b981;
+        }
+        .toast-message.success i {
+            color: #10b981;
+        }
+        .toast-message.error {
+            background: #0f172a;
+            border-left: 4px solid #ef4444;
+        }
+        .toast-message.error i {
+            color: #ef4444;
+        }
+
+        /* ── Mobile overlay ── */
+        .sidebar-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.3);
+            z-index: 19;
+        }
+        .sidebar-overlay.show { display: block; }
+
+        /* ── Responsive ── */
+        @media (max-width: 900px) {
+            .dash-layout {
+                grid-template-columns: 1fr;
+            }
+            .dash-sidebar {
+                position: fixed;
+                top: 68px;
+                left: 0;
+                bottom: 0;
+                width: 280px;
+                z-index: 20;
+                transform: translateX(-100%);
+                transition: transform 0.3s ease;
+                box-shadow: 4px 0 20px rgba(0,0,0,0.1);
+            }
+            .dash-sidebar.mobile-open {
+                transform: translateX(0);
+            }
+            .hamburger-btn { display: grid; place-items: center; }
+            .dash-topbar-right .user-email { display: none; }
+            .dash-main { padding: 24px 20px 48px; }
+        }
+        @media (max-width: 768px) {
+            .timetable-table-wrap { display: none; }
+            .timetable-mobile-cards { display: flex; }
+            .announcements-table-wrap { display: none; }
+            .announcements-mobile-cards { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+        }
+        @media (max-width: 560px) {
+            .dash-topbar { padding: 0 16px; height: 60px; }
+            .dash-main { padding: 20px 16px 40px; }
+            .stats-grid { grid-template-columns: 1fr; }
+            .info-row { grid-template-columns: 1fr; }
+            .role-badge { font-size: 0.56rem; padding: 3px 8px; }
+            .btn-logout span { display: none; }
+            .dash-form-row { grid-template-columns: 1fr; }
+            .section-header-wrap { flex-direction: column; align-items: stretch; }
+            .section-header-actions .btn-primary { width: 100%; }
+            .toast-container { left: 16px; right: 16px; bottom: 16px; max-width: none; }
         }
     </style>
 </head>
 <body class="auth-cloak" id="dashboardBody">
-    <header class="site-header">
-        <a class="brand" href="index.html" aria-label="NWU Software Engineering home">
-            <span class="brand-mark"><img style="border-radius:50%;" src="assets/NWU.jpeg" alt="NWU Logo" height="80" width="80" /></span>
-            <span class="brand-copy"><strong>NWU SE</strong><small>Class Rep Portal</small></span>
-        </a>
-        <div class="header-actions">
-            <a href="index.html" class="quiet-button" style="text-decoration:none;"><i class="fa-solid fa-arrow-up-right-from-square"></i> Student View</a>
-            <button class="accent-button compact" id="headerLogoutBtn"><i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out</button>
-        </div>
-    </header>
 
-    <main class="dashboard-container section-wrap">
-        <!-- Dashboard Profile Header -->
-        <div class="dashboard-header-card">
-            <div class="dash-user-row">
-                <div class="user-identity">
-                    <div class="user-avatar"><i class="fa-solid fa-user-shield"></i></div>
-                    <div class="user-meta">
-                        <strong id="displayEmail">Loading profile...</strong>
-                        <span>Software Engineering Department · Level 200</span>
+    <!-- ═══════════ Layout ═══════════ -->
+    <div class="dash-layout">
+
+        <!-- ── Topbar ── -->
+        <header class="dash-topbar" id="dashTopbar">
+            <div class="dash-topbar-left">
+                <button class="hamburger-btn" id="hamburgerBtn" aria-label="Toggle navigation">
+                    <i class="fa-solid fa-bars"></i>
+                </button>
+                <a class="brand-link" href="index.html" aria-label="NWU Software Engineering home">
+                    <img class="brand-logo" src="assets/NWU.jpeg" alt="NWU Logo" width="40" height="40">
+                    <span class="brand-text">
+                        <strong>NWU SE</strong>
+                        <small>Level 200 Software Engineering</small>
+                    </span>
+                </a>
+            </div>
+            <div class="dash-topbar-right">
+                <span class="user-email" id="displayEmail">Loading...</span>
+                <span class="role-badge" id="displayRoleBadge">
+                    <i class="fa-solid fa-circle-check"></i>
+                    <span id="displayRoleText">Authorizing...</span>
+                </span>
+                <button class="btn-logout" id="headerLogoutBtn">
+                    <i class="fa-solid fa-arrow-right-from-bracket"></i>
+                    <span>Sign Out</span>
+                </button>
+            </div>
+        </header>
+
+        <!-- ── Sidebar ── -->
+        <aside class="dash-sidebar" id="dashSidebar">
+            <span class="sidebar-section-label">Dashboard</span>
+            <ul class="sidebar-nav" id="sidebarNav">
+                <li>
+                    <button class="nav-item active" data-section="overview" id="navOverview">
+                        <i class="fa-solid fa-chart-pie"></i> Overview
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-item" data-section="timetable" id="navTimetable">
+                        <i class="fa-regular fa-calendar-days"></i> Timetable
+                    </button>
+                </li>
+                <li>
+                    <button class="nav-item" data-section="announcements" id="navAnnouncements">
+                        <i class="fa-solid fa-bullhorn"></i> Announcements
+                    </button>
+                </li>
+                <li id="navUsersItem" style="display: none;">
+                    <button class="nav-item" data-section="users" id="navUsers">
+                        <i class="fa-solid fa-users-gear"></i> Users
+                    </button>
+                </li>
+            </ul>
+            <div class="sidebar-bottom">
+                <a class="student-link" href="index.html">
+                    <i class="fa-solid fa-arrow-up-right-from-square"></i>
+                    View Student Site
+                </a>
+            </div>
+        </aside>
+
+        <!-- ── Sidebar overlay (mobile) ── -->
+        <div class="sidebar-overlay" id="sidebarOverlay"></div>
+
+        <!-- ── Main content ── -->
+        <main class="dash-main" id="dashMain">
+
+            <!-- ═══ Overview Section ═══ -->
+            <section class="dash-section active" id="sectionOverview">
+                <h1 class="section-title">Overview</h1>
+                <p class="section-subtitle">Dashboard summary for the SE 200 program.</p>
+
+                <!-- Error panel (hidden by default) -->
+                <div class="error-panel" id="overviewError">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p id="overviewErrorText">Unable to load dashboard data. Please check your connection and try again.</p>
+                    <button class="btn-retry" id="retryBtn">
+                        <i class="fa-solid fa-rotate-right"></i> Retry
+                    </button>
+                </div>
+
+                <!-- Stats -->
+                <div class="stats-grid" id="statsGrid">
+                    <div class="stat-card">
+                        <div class="stat-icon-wrap courses-icon"><i class="fa-solid fa-book"></i></div>
+                        <span class="stat-label">Courses</span>
+                        <strong class="stat-value loading" id="statCourses"></strong>
+                        <small class="stat-sub">Registered this semester</small>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon-wrap timetable-icon"><i class="fa-regular fa-calendar-days"></i></div>
+                        <span class="stat-label">Timetable Entries</span>
+                        <strong class="stat-value loading" id="statTimetable"></strong>
+                        <small class="stat-sub">Scheduled lecture slots</small>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-icon-wrap announcements-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                        <span class="stat-label">Announcements</span>
+                        <strong class="stat-value loading" id="statAnnouncements"></strong>
+                        <small class="stat-sub" id="statAnnouncementsSub">Total announcements</small>
                     </div>
                 </div>
-                <div>
-                    <span class="role-badge" id="displayRoleBadge">
-                        <i class="fa-solid fa-circle-check"></i>
-                        <span id="displayRoleText">Authorizing...</span>
-                    </span>
-                </div>
-            </div>
 
-            <div class="grid-stats">
-                <div class="stat-card">
-                    <span class="label">ACCOUNT ROLE</span>
-                    <strong class="value" id="statRoleTitle">—</strong>
-                    <small class="sub">Verified via PostgreSQL Profiles</small>
+                <!-- Quick info -->
+                <div class="info-row">
+                    <div class="info-card">
+                        <div class="info-label">Account Role</div>
+                        <div class="info-value" id="infoRole">—</div>
+                        <div class="info-sub">Verified via PostgreSQL Profiles</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Database Security</div>
+                        <div class="info-value">RLS Active &amp; Enforced</div>
+                        <div class="info-sub">Row-Level Security protecting all tables</div>
+                    </div>
+                    <div class="info-card">
+                        <div class="info-label">Session Status</div>
+                        <div class="info-value">Authenticated</div>
+                        <div class="info-sub">Valid Supabase session</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <span class="label">DATABASE RLS</span>
-                    <strong class="value" style="color: #111;">Active & Enforced</strong>
-                    <small class="sub">Policies protecting all tables</small>
+            </section>
+
+            <!-- ═══ Timetable Section ═══ -->
+            <section class="dash-section" id="sectionTimetable">
+                <div class="section-header-wrap">
+                    <div>
+                        <h1 class="section-title">Timetable</h1>
+                        <p class="section-subtitle">Manage lecture schedule and time slots.</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn-primary" id="btnAddClass">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Class</span>
+                        </button>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <span class="label">STATUS</span>
-                    <strong class="value" style="color: #111;">Authenticated</strong>
-                    <small class="sub">Valid Supabase session</small>
+
+                <!-- Timetable error alert -->
+                <div class="error-panel" id="timetableError">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p id="timetableErrorText">Unable to load timetable. Please check your connection and try again.</p>
+                    <button class="btn-retry" id="retryTimetableBtn">
+                        <i class="fa-solid fa-rotate-right"></i> Retry
+                    </button>
                 </div>
+
+                <!-- Loading State -->
+                <div class="timetable-loading-state" id="timetableLoading">
+                    <div class="spinner"></div>
+                    <p>Loading schedule...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="timetable-empty-state" id="timetableEmpty">
+                    <div class="empty-icon"><i class="fa-regular fa-calendar-xmark"></i></div>
+                    <h3>No Classes Scheduled</h3>
+                    <p>No timetable entries have been added yet for Level 200. Click below to add your first lecture slot.</p>
+                    <button class="btn-primary" id="btnEmptyAddClass">
+                        <i class="fa-solid fa-plus"></i> Add Class
+                    </button>
+                </div>
+
+                <!-- Timetable Box (Desktop Table + Mobile Cards) -->
+                <div class="timetable-box" id="timetableBox" style="display: none;">
+                    <div class="timetable-table-wrap">
+                        <table class="timetable-table">
+                            <thead>
+                                <tr>
+                                    <th>Course</th>
+                                    <th>Day</th>
+                                    <th>Time</th>
+                                    <th>Venue</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="timetableTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards -->
+                    <div class="timetable-mobile-cards" id="timetableMobileCards">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ Announcements Section ═══ -->
+            <section class="dash-section" id="sectionAnnouncements">
+                <div class="section-header-wrap">
+                    <div>
+                        <h1 class="section-title">Announcements</h1>
+                        <p class="section-subtitle">Broadcast notices, updates, and student alerts.</p>
+                    </div>
+                    <div class="section-header-actions">
+                        <button class="btn-primary" id="btnAddAnnouncement">
+                            <i class="fa-solid fa-plus"></i>
+                            <span>Add Announcement</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Announcements error alert -->
+                <div class="error-panel" id="announcementsError">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <p id="announcementsErrorText">Unable to load announcements. Please check your connection and try again.</p>
+                    <button class="btn-retry" id="retryAnnouncementsBtn">
+                        <i class="fa-solid fa-rotate-right"></i> Retry
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div class="timetable-loading-state" id="announcementsLoading">
+                    <div class="spinner"></div>
+                    <p>Loading announcements...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="timetable-empty-state" id="announcementsEmpty">
+                    <div class="empty-icon"><i class="fa-solid fa-bullhorn"></i></div>
+                    <h3>No Announcements Yet</h3>
+                    <p>No broadcast notices have been published or drafted yet. Click below to create your first announcement.</p>
+                    <button class="btn-primary" id="btnEmptyAddAnnouncement">
+                        <i class="fa-solid fa-plus"></i> Add Announcement
+                    </button>
+                </div>
+
+                <!-- Announcements Box (Desktop Table + Mobile Cards) -->
+                <div class="timetable-box" id="announcementsBox" style="display: none;">
+                    <div class="timetable-table-wrap announcements-table-wrap">
+                        <table class="timetable-table">
+                            <thead>
+                                <tr>
+                                    <th>Title &amp; Summary</th>
+                                    <th>Category</th>
+                                    <th>Status</th>
+                                    <th>Published</th>
+                                    <th>Created</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="announcementsTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards -->
+                    <div class="timetable-mobile-cards announcements-mobile-cards" id="announcementsMobileCards">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </section>
+
+            <!-- ═══ Users Section (admin only) ═══ -->
+            <section class="dash-section" id="sectionUsers">
+                <h1 class="section-title">Users</h1>
+                <p class="section-subtitle">Manage authorized Class Representatives and Admins.</p>
+                <div class="placeholder-card">
+                    <div class="placeholder-icon"><i class="fa-solid fa-users-gear"></i></div>
+                    <h3>User Management</h3>
+                    <p>Assign roles, manage access, and control who can administer the SE 200 platform. This management interface will be available in a future phase.</p>
+                    <span class="placeholder-badge">ADMIN FEATURE · COMING SOON</span>
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <!-- ═══════════ Add / Edit Modal ═══════════ -->
+    <div class="dash-modal-backdrop" id="timetableModal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+        <div class="dash-modal">
+            <div class="dash-modal-header">
+                <h3 id="modalTitle">Add Timetable Entry</h3>
+                <button class="btn-modal-close" id="modalCloseBtn" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="timetableForm" novalidate>
+                <div class="dash-modal-body">
+                    <div class="dash-form-alert" id="formAlert" style="display: none;"></div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="entryCourse">Course <span class="required">*</span></label>
+                        <select class="dash-form-control" id="entryCourse" required>
+                            <option value="">Select a course...</option>
+                        </select>
+                    </div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="entryDay">Day <span class="required">*</span></label>
+                        <select class="dash-form-control" id="entryDay" required>
+                            <option value="">Select day of week...</option>
+                            <option value="Monday">Monday</option>
+                            <option value="Tuesday">Tuesday</option>
+                            <option value="Wednesday">Wednesday</option>
+                            <option value="Thursday">Thursday</option>
+                            <option value="Friday">Friday</option>
+                            <option value="Saturday">Saturday</option>
+                            <option value="Sunday">Sunday</option>
+                        </select>
+                    </div>
+
+                    <div class="dash-form-row">
+                        <div class="dash-form-group">
+                            <label class="dash-form-label" for="entryStartTime">Start Time <span class="required">*</span></label>
+                            <input type="time" class="dash-form-control" id="entryStartTime" required>
+                        </div>
+                        <div class="dash-form-group">
+                            <label class="dash-form-label" for="entryEndTime">End Time <span class="required">*</span></label>
+                            <input type="time" class="dash-form-control" id="entryEndTime" required>
+                        </div>
+                    </div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="entryVenue">Venue <span class="required">*</span></label>
+                        <input type="text" class="dash-form-control" id="entryVenue" placeholder="e.g. Lab 3, Hall B, Room 204" required maxlength="100">
+                    </div>
+                </div>
+                <div class="dash-modal-footer">
+                    <button type="button" class="btn-secondary" id="modalCancelBtn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="btnSaveEntry">
+                        <span id="btnSaveText">Save Entry</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════ Delete Confirmation Modal (Timetable) ═══════════ -->
+    <div class="dash-modal-backdrop" id="deleteModal" role="dialog" aria-modal="true" aria-labelledby="deleteModalTitle">
+        <div class="dash-modal dash-modal-sm">
+            <div class="dash-modal-header delete-header">
+                <div class="delete-icon-wrap"><i class="fa-solid fa-trash-can"></i></div>
+                <h3 id="deleteModalTitle">Delete Class Slot</h3>
+                <button class="btn-modal-close" id="deleteModalCloseBtn" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="dash-modal-body">
+                <p class="delete-message" id="deleteConfirmMsg">Are you sure you want to delete this lecture slot?</p>
+                <p class="delete-hint">This action only removes this schedule entry from the timetable. The course will not be deleted.</p>
+            </div>
+            <div class="dash-modal-footer">
+                <button type="button" class="btn-secondary" id="deleteCancelBtn">Cancel</button>
+                <button type="button" class="btn-danger" id="btnConfirmDelete">
+                    <span id="btnDeleteText">Delete Entry</span>
+                </button>
             </div>
         </div>
+    </div>
 
-        <!-- Dashboard Coming Next Placeholder -->
-        <div class="feature-box">
-            <p class="eyebrow"><span></span> MANAGEMENT INTERFACE <span></span></p>
-            <h2>Dashboard coming next</h2>
-            <p>
-                You are securely logged in as an authorized user. The management tools for Class Representatives and Administrators are being assembled in Phase 4.
-                Your role and database operations are already protected directly by Row-Level Security (RLS) in Supabase.
-            </p>
+    <!-- ═══════════ Add / Edit Announcement Modal ═══════════ -->
+    <div class="dash-modal-backdrop" id="announcementModal" role="dialog" aria-modal="true" aria-labelledby="announcementModalTitle">
+        <div class="dash-modal">
+            <div class="dash-modal-header">
+                <h3 id="announcementModalTitle">Add Announcement</h3>
+                <button class="btn-modal-close" id="announcementModalCloseBtn" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="announcementForm" novalidate>
+                <div class="dash-modal-body">
+                    <div class="dash-form-alert" id="announcementFormAlert" style="display: none;"></div>
 
-            <div class="upcoming-grid">
-                <div class="upcoming-item">
-                    <i class="fa-regular fa-calendar-days"></i>
-                    <strong>Timetable Management</strong>
-                    <p>Add, edit, reschedule, or update lecture slots, venues, and times.</p>
-                    <span class="badge-coming-soon">NEXT PHASE</span>
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="announcementTitle">Title <span class="required">*</span></label>
+                        <input type="text" class="dash-form-control" id="announcementTitle" placeholder="e.g. Mid-Semester Examination Schedule" required maxlength="255">
+                    </div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="announcementCategory">Category <span class="required">*</span></label>
+                        <select class="dash-form-control" id="announcementCategory" required>
+                            <option value="">Select category...</option>
+                            <option value="General">General</option>
+                            <option value="Timetable">Timetable</option>
+                            <option value="Academic">Academic</option>
+                            <option value="Department">Department</option>
+                            <option value="SIWES">SIWES</option>
+                        </select>
+                    </div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="announcementContent">Content <span class="required">*</span></label>
+                        <textarea class="dash-form-control" id="announcementContent" placeholder="Write the announcement details, requirements, or guidelines..." required></textarea>
+                    </div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-checkbox-wrap" for="announcementIsPublished">
+                            <input type="checkbox" id="announcementIsPublished" checked>
+                            <span>Publish immediately (visible to students)</span>
+                        </label>
+                    </div>
                 </div>
-
-                <div class="upcoming-item">
-                    <i class="fa-solid fa-bullhorn"></i>
-                    <strong>SIWES & Announcements</strong>
-                    <p>Broadcast notices, industrial training updates, and urgent alerts.</p>
-                    <span class="badge-coming-soon">NEXT PHASE</span>
+                <div class="dash-modal-footer">
+                    <button type="button" class="btn-secondary" id="announcementModalCancelBtn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="btnSaveAnnouncement">
+                        <span id="btnSaveAnnouncementText">Save Announcement</span>
+                    </button>
                 </div>
+            </form>
+        </div>
+    </div>
 
-                <div class="upcoming-item">
-                    <i class="fa-solid fa-users-gear"></i>
-                    <strong>Representative Access</strong>
-                    <p>Admin control to assign authorized Class Representatives.</p>
-                    <span class="badge-coming-soon">ADMIN FEATURE</span>
-                </div>
+    <!-- ═══════════ Delete Announcement Modal ═══════════ -->
+    <div class="dash-modal-backdrop" id="announcementDeleteModal" role="dialog" aria-modal="true" aria-labelledby="annDeleteModalTitle">
+        <div class="dash-modal dash-modal-sm">
+            <div class="dash-modal-header delete-header">
+                <div class="delete-icon-wrap"><i class="fa-solid fa-trash-can"></i></div>
+                <h3 id="annDeleteModalTitle">Delete Announcement</h3>
+                <button class="btn-modal-close" id="annDeleteModalCloseBtn" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="dash-modal-body">
+                <p class="delete-message" id="annDeleteConfirmMsg">Are you sure you want to delete this announcement?</p>
+                <p class="delete-hint">This action permanently removes the announcement from the system.</p>
+            </div>
+            <div class="dash-modal-footer">
+                <button type="button" class="btn-secondary" id="annDeleteCancelBtn">Cancel</button>
+                <button type="button" class="btn-danger" id="btnConfirmDeleteAnnouncement">
+                    <span id="btnDeleteAnnouncementText">Delete Announcement</span>
+                </button>
             </div>
         </div>
+    </div>
 
-        <div class="actions-footer">
-            <a href="index.html" class="text-button"><i class="fa-solid fa-arrow-left"></i> Return to Public Timetable</a>
-            <button class="quiet-button" id="footerLogoutBtn" style="color:#b3261e; border-color: rgba(179,38,30,0.2);">
-                <i class="fa-solid fa-arrow-right-from-bracket"></i> Sign Out
-            </button>
-        </div>
-    </main>
+    <!-- ═══════════ Toast Container ═══════════ -->
+    <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script src="supabase.js"></script>
