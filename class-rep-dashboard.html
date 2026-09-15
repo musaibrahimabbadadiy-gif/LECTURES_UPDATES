@@ -1092,7 +1092,73 @@
         .announcement-meta-date {
             font-size: 0.78rem;
             color: #64748b;
-            white-space: nowrap;
+        /* ── Users Management UI Styles ── */
+        .user-role-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.72rem;
+            font-weight: 700;
+            padding: 3px 10px;
+            border-radius: 20px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .user-role-badge.admin {
+            background: #fdf2f8;
+            color: #be185d;
+            border: 1px solid #fbcfe8;
+        }
+        .user-role-badge.class_rep {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+        }
+        .user-email-cell {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .user-avatar {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            background: #f1f5f9;
+            color: #0f172a;
+            display: grid;
+            place-items: center;
+            font-size: 0.8rem;
+            font-weight: 700;
+            flex-shrink: 0;
+        }
+        .user-you-tag {
+            font-size: 0.62rem;
+            font-weight: 700;
+            background: #111;
+            color: #fff;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .btn-action-role {
+            padding: 6px 10px;
+            font-size: 0.74rem;
+            border: 1px solid #e2e8f0;
+            border-radius: 6px;
+            background: #fff;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.15s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .btn-action-role:hover {
+            background: #f8fafc;
+            color: #0f172a;
+            border-color: #cbd5e1;
         }
 
         /* ── Toasts ── */
@@ -1457,13 +1523,64 @@
 
             <!-- ═══ Users Section (admin only) ═══ -->
             <section class="dash-section" id="sectionUsers">
-                <h1 class="section-title">Users</h1>
-                <p class="section-subtitle">Manage authorized Class Representatives and Admins.</p>
-                <div class="placeholder-card">
-                    <div class="placeholder-icon"><i class="fa-solid fa-users-gear"></i></div>
-                    <h3>User Management</h3>
-                    <p>Assign roles, manage access, and control who can administer the SE 200 platform. This management interface will be available in a future phase.</p>
-                    <span class="placeholder-badge">ADMIN FEATURE · COMING SOON</span>
+                <div class="dash-section-header">
+                    <div>
+                        <h1 class="section-title">User Management</h1>
+                        <p class="section-subtitle">Manage Class Rep access and administrative roles.</p>
+                    </div>
+                    <button class="btn-primary" id="btnAddUserModal">
+                        <i class="fa-solid fa-user-plus"></i> Add Class Rep
+                    </button>
+                </div>
+
+                <!-- Error Alert -->
+                <div class="timetable-error" id="usersError" style="display: none;">
+                    <i class="fa-solid fa-triangle-exclamation"></i>
+                    <span id="usersErrorText">Failed to load user accounts.</span>
+                    <button class="btn-retry" id="retryUsersBtn">
+                        <i class="fa-solid fa-rotate-right"></i> Retry
+                    </button>
+                </div>
+
+                <!-- Loading State -->
+                <div class="timetable-loading-state" id="usersLoading">
+                    <div class="spinner"></div>
+                    <p>Loading user accounts...</p>
+                </div>
+
+                <!-- Empty State -->
+                <div class="timetable-empty-state" id="usersEmpty" style="display: none;">
+                    <div class="empty-icon"><i class="fa-solid fa-users"></i></div>
+                    <h3>No Users Found</h3>
+                    <p>No user accounts have been retrieved. Click below to add a new Class Representative.</p>
+                    <button class="btn-primary" id="btnEmptyAddUser">
+                        <i class="fa-solid fa-user-plus"></i> Add Class Rep
+                    </button>
+                </div>
+
+                <!-- Users Box (Desktop Table + Mobile Cards) -->
+                <div class="timetable-box" id="usersBox" style="display: none;">
+                    <div class="timetable-table-wrap">
+                        <table class="timetable-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>User Account</th>
+                                    <th>Role</th>
+                                    <th>Created</th>
+                                    <th>Last Active</th>
+                                    <th style="text-align: right;">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTbody">
+                                <!-- Populated dynamically -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mobile Cards -->
+                    <div class="timetable-mobile-cards" id="usersMobileCards">
+                        <!-- Populated dynamically -->
+                    </div>
                 </div>
             </section>
 
@@ -1623,6 +1740,101 @@
                 <button type="button" class="btn-secondary" id="annDeleteCancelBtn">Cancel</button>
                 <button type="button" class="btn-danger" id="btnConfirmDeleteAnnouncement">
                     <span id="btnDeleteAnnouncementText">Delete Announcement</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ Add User Modal ═══════════ -->
+    <div class="dash-modal-backdrop" id="addUserModal" role="dialog" aria-modal="true" aria-labelledby="addUserModalTitle">
+        <div class="dash-modal">
+            <div class="dash-modal-header">
+                <h3 id="addUserModalTitle">Add Class Representative</h3>
+                <button class="btn-modal-close" id="addUserModalCloseBtn" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <form id="addUserForm" novalidate>
+                <div class="dash-modal-body">
+                    <div class="dash-form-alert" id="userFormAlert" style="display: none;"></div>
+
+                    <p style="font-size: 0.82rem; color: #64748b; margin-bottom: 18px; line-height: 1.5;">
+                        Create an authenticated account for a Class Representative. They will receive access to manage timetable schedules and announcements.
+                    </p>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="userEmail">Email Address <span class="required">*</span></label>
+                        <input type="email" class="dash-form-control" id="userEmail" placeholder="e.g. rep@student.nwu.edu.ng" required autocomplete="off">
+                    </div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label" for="userPassword">Temporary Password <span class="required">*</span></label>
+                        <input type="password" class="dash-form-control" id="userPassword" placeholder="Minimum 6 characters" required autocomplete="new-password" minlength="6">
+                        <p style="font-size: 0.73rem; color: #94a3b8; margin-top: 5px;">
+                            <i class="fa-solid fa-circle-info"></i> Provide a temporary password. Advise the Class Rep to keep it safe.
+                        </p>
+                    </div>
+
+                    <div class="dash-form-group">
+                        <label class="dash-form-label">Role Assignment</label>
+                        <input type="text" class="dash-form-control" value="Class Representative (Fixed)" readonly style="background: #f8fafc; color: #64748b; cursor: not-allowed;">
+                    </div>
+                </div>
+                <div class="dash-modal-footer">
+                    <button type="button" class="btn-secondary" id="addUserCancelBtn">Cancel</button>
+                    <button type="submit" class="btn-primary" id="btnSubmitUser">
+                        <span id="btnSubmitUserText">Create Class Rep</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ═══════════ Delete User Modal ═══════════ -->
+    <div class="dash-modal-backdrop" id="userDeleteModal" role="dialog" aria-modal="true" aria-labelledby="userDeleteModalTitle">
+        <div class="dash-modal dash-modal-sm">
+            <div class="dash-modal-header delete-header">
+                <div class="delete-icon-wrap"><i class="fa-solid fa-user-xmark"></i></div>
+                <h3 id="userDeleteModalTitle">Delete Class Rep Account</h3>
+                <button class="btn-modal-close" id="userDeleteModalCloseBtn" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="dash-modal-body">
+                <p class="delete-message">Are you sure you want to permanently delete <strong id="deleteUserEmail">this user</strong>?</p>
+                <p class="delete-hint">This action removes the authentication account and revokes all dashboard access immediately.</p>
+            </div>
+            <div class="dash-modal-footer">
+                <button type="button" class="btn-secondary" id="userDeleteCancelBtn">Cancel</button>
+                <button type="button" class="btn-danger" id="btnConfirmDeleteUser">
+                    <span id="btnDeleteUserText">Delete Account</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══════════ Change Role Modal ═══════════ -->
+    <div class="dash-modal-backdrop" id="userRoleModal" role="dialog" aria-modal="true" aria-labelledby="userRoleModalTitle">
+        <div class="dash-modal dash-modal-sm">
+            <div class="dash-modal-header">
+                <h3 id="userRoleModalTitle">Change User Role</h3>
+                <button class="btn-modal-close" id="userRoleModalCloseBtn" aria-label="Close modal">
+                    <i class="fa-solid fa-xmark"></i>
+                </button>
+            </div>
+            <div class="dash-modal-body">
+                <div class="dash-form-alert" id="roleModalAlert" style="display: none;"></div>
+                <p style="font-size: 0.88rem; color: #334155; line-height: 1.5;">
+                    Change role for <strong id="roleUserEmail">this user</strong> to <strong id="roleTargetRoleName">Administrator</strong>?
+                </p>
+                <p style="font-size: 0.78rem; color: #64748b; margin-top: 10px;" id="roleChangeHint">
+                    Administrators have full privileges including User Management.
+                </p>
+            </div>
+            <div class="dash-modal-footer">
+                <button type="button" class="btn-secondary" id="userRoleCancelBtn">Cancel</button>
+                <button type="button" class="btn-primary" id="btnConfirmChangeRole">
+                    <span id="btnChangeRoleText">Confirm Change</span>
                 </button>
             </div>
         </div>

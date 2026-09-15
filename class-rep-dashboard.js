@@ -95,6 +95,53 @@
     const btnDeleteAnnouncementText = document.getElementById('btnDeleteAnnouncementText');
     const annDeleteConfirmMsg = document.getElementById('annDeleteConfirmMsg');
 
+    // ── Users Management DOM Elements ──
+    const sectionUsers = document.getElementById('sectionUsers');
+    const usersError = document.getElementById('usersError');
+    const usersErrorText = document.getElementById('usersErrorText');
+    const retryUsersBtn = document.getElementById('retryUsersBtn');
+    const usersLoading = document.getElementById('usersLoading');
+    const usersEmpty = document.getElementById('usersEmpty');
+    const btnEmptyAddUser = document.getElementById('btnEmptyAddUser');
+    const usersBox = document.getElementById('usersBox');
+    const usersTable = document.getElementById('usersTable');
+    const usersTbody = document.getElementById('usersTbody');
+    const usersMobileCards = document.getElementById('usersMobileCards');
+    const btnAddUserModal = document.getElementById('btnAddUserModal');
+
+    // Add User Modal
+    const addUserModal = document.getElementById('addUserModal');
+    const addUserModalTitle = document.getElementById('addUserModalTitle');
+    const addUserModalCloseBtn = document.getElementById('addUserModalCloseBtn');
+    const addUserCancelBtn = document.getElementById('addUserCancelBtn');
+    const addUserForm = document.getElementById('addUserForm');
+    const userFormAlert = document.getElementById('userFormAlert');
+    const userEmail = document.getElementById('userEmail');
+    const userPassword = document.getElementById('userPassword');
+    const btnSubmitUser = document.getElementById('btnSubmitUser');
+    const btnSubmitUserText = document.getElementById('btnSubmitUserText');
+
+    // Delete User Modal
+    const userDeleteModal = document.getElementById('userDeleteModal');
+    const userDeleteModalTitle = document.getElementById('userDeleteModalTitle');
+    const userDeleteModalCloseBtn = document.getElementById('userDeleteModalCloseBtn');
+    const userDeleteCancelBtn = document.getElementById('userDeleteCancelBtn');
+    const deleteUserEmail = document.getElementById('deleteUserEmail');
+    const btnConfirmDeleteUser = document.getElementById('btnConfirmDeleteUser');
+    const btnDeleteUserText = document.getElementById('btnDeleteUserText');
+
+    // Change Role Modal
+    const userRoleModal = document.getElementById('userRoleModal');
+    const userRoleModalTitle = document.getElementById('userRoleModalTitle');
+    const userRoleModalCloseBtn = document.getElementById('userRoleModalCloseBtn');
+    const userRoleCancelBtn = document.getElementById('userRoleCancelBtn');
+    const roleModalAlert = document.getElementById('roleModalAlert');
+    const roleUserEmail = document.getElementById('roleUserEmail');
+    const roleTargetRoleName = document.getElementById('roleTargetRoleName');
+    const roleChangeHint = document.getElementById('roleChangeHint');
+    const btnConfirmChangeRole = document.getElementById('btnConfirmChangeRole');
+    const btnChangeRoleText = document.getElementById('btnChangeRoleText');
+
     // ── State variables ──
     let cachedCourses = [];
     let timetableEntries = [];
@@ -110,6 +157,17 @@
     let isSavingAnnouncement = false;
     let isDeletingAnnouncement = false;
     let announcementsLoadedOnce = false;
+
+    // Users state
+    let usersList = [];
+    let currentDeletingUserId = null;
+    let currentRoleChangeUserId = null;
+    let currentRoleChangeTargetRole = '';
+    let isSavingUser = false;
+    let isDeletingUser = false;
+    let isChangingRole = false;
+    let usersLoadedOnce = false;
+    let loggedInUserId = null;
 
     // Day ordering map: Monday -> Sunday
     const DAY_ORDER_MAP = {
@@ -262,6 +320,11 @@
             // Lazy load Announcements when switched
             if (sectionId === 'announcements') {
                 fetchAnnouncementsList();
+            }
+
+            // Lazy load Users when switched (Admin only)
+            if (sectionId === 'users') {
+                fetchUsersList();
             }
 
             // Close mobile sidebar
@@ -1338,6 +1401,435 @@
     if (announcementsTbody) announcementsTbody.addEventListener('click', handleAnnouncementsActionClick);
     if (announcementsMobileCards) announcementsMobileCards.addEventListener('click', handleAnnouncementsActionClick);
 
+    // ══════════════════════════════════════════════════
+    // ── USER MANAGEMENT (ADMIN ONLY) LOGIC
+    // ══════════════════════════════════════════════════
+
+    async function invokeManageUsers(body) {
+        const client = getDbClient();
+        if (!client) throw new Error('Database client unavailable.');
+
+        const sessionRes = await client.auth.getSession();
+        const session = sessionRes.data ? sessionRes.data.session : null;
+        if (!session) throw new Error('Session expired. Please log in again.');
+
+        const { data, error } = await client.functions.invoke('manage-users', {
+            body: body
+        });
+
+        if (error) {
+            let msg = error.message || 'Operation failed';
+            if (error.context && typeof error.context.json === 'function') {
+                try {
+                    const json = await error.context.json();
+                    if (json && json.error) msg = json.error;
+                } catch {}
+            }
+            throw new Error(msg);
+        }
+
+        if (data && data.error) {
+            throw new Error(data.error);
+        }
+
+        return data;
+    }
+
+    function showUsersLoading() {
+        if (usersLoading) usersLoading.style.display = 'flex';
+        if (usersBox) usersBox.style.display = 'none';
+        if (usersEmpty) usersEmpty.style.display = 'none';
+        if (usersError) usersError.style.display = 'none';
+    }
+
+    function hideUsersLoading() {
+        if (usersLoading) usersLoading.style.display = 'none';
+    }
+
+    function showUsersError(msg) {
+        hideUsersLoading();
+        if (usersBox) usersBox.style.display = 'none';
+        if (usersEmpty) usersEmpty.style.display = 'none';
+        if (usersError) {
+            usersError.style.display = 'flex';
+            if (usersErrorText) usersErrorText.textContent = msg || 'Failed to load user accounts.';
+        }
+    }
+
+    function hideUsersError() {
+        if (usersError) usersError.style.display = 'none';
+    }
+
+    async function fetchUsersList() {
+        showUsersLoading();
+        hideUsersError();
+
+        try {
+            const res = await invokeManageUsers({ action: 'list' });
+            usersList = res.users || [];
+            usersLoadedOnce = true;
+            renderUsersUI();
+        } catch (err) {
+            console.error('Failed to fetch users list:', err);
+            showUsersError(err.message || 'Unable to load user accounts.');
+        }
+    }
+
+    function renderUsersUI() {
+        hideUsersLoading();
+
+        if (usersList.length === 0) {
+            if (usersEmpty) usersEmpty.style.display = 'block';
+            if (usersBox) usersBox.style.display = 'none';
+            return;
+        }
+
+        if (usersEmpty) usersEmpty.style.display = 'none';
+        if (usersBox) usersBox.style.display = 'block';
+
+        // 1. Render Desktop Table
+        if (usersTbody) {
+            usersTbody.innerHTML = usersList.map(u => {
+                const isAdmin = u.role === 'admin';
+                const isYou = u.is_current_user || u.id === loggedInUserId;
+                const createdStr = formatDateTime(u.created_at);
+                const lastActiveStr = u.last_sign_in_at ? formatDateTime(u.last_sign_in_at) : 'Never';
+                const initial = (u.email ? u.email.charAt(0).toUpperCase() : '?');
+
+                let actionsHtml = '';
+                if (isYou) {
+                    actionsHtml = `<span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">Current Session</span>`;
+                } else {
+                    const toggleRoleLabel = isAdmin ? 'Demote to Rep' : 'Promote to Admin';
+                    const toggleRoleIcon = isAdmin ? 'fa-arrow-down' : 'fa-shield-halved';
+                    
+                    const roleBtn = `<button class="btn-action-role" data-action="change-role" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" data-role="${escapeHtml(u.role)}" title="${toggleRoleLabel}">
+                        <i class="fa-solid ${toggleRoleIcon}"></i> ${isAdmin ? 'Demote' : 'Make Admin'}
+                    </button>`;
+
+                    const deleteBtn = !isAdmin
+                        ? `<button class="btn-action-delete" data-action="delete" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" title="Delete Class Rep">
+                            <i class="fa-solid fa-trash-can"></i>
+                           </button>`
+                        : '';
+
+                    actionsHtml = `<div class="timetable-actions" style="justify-content: flex-end;">${roleBtn}${deleteBtn}</div>`;
+                }
+
+                return `
+                    <tr>
+                        <td>
+                            <div class="user-email-cell">
+                                <div class="user-avatar">${initial}</div>
+                                <div>
+                                    <strong style="font-size: 0.88rem; color: #0f172a;">${escapeHtml(u.email)}</strong>
+                                    ${isYou ? '<span class="user-you-tag">You</span>' : ''}
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="user-role-badge ${isAdmin ? 'admin' : 'class_rep'}">
+                                <i class="fa-solid ${isAdmin ? 'fa-shield-halved' : 'fa-user-graduate'}"></i>
+                                ${isAdmin ? 'Administrator' : 'Class Rep'}
+                            </span>
+                        </td>
+                        <td class="announcement-meta-date">${createdStr}</td>
+                        <td class="announcement-meta-date">${lastActiveStr}</td>
+                        <td style="text-align: right;">${actionsHtml}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        // 2. Render Mobile Cards
+        if (usersMobileCards) {
+            usersMobileCards.innerHTML = usersList.map(u => {
+                const isAdmin = u.role === 'admin';
+                const isYou = u.is_current_user || u.id === loggedInUserId;
+                const createdStr = formatDateTime(u.created_at);
+                const lastActiveStr = u.last_sign_in_at ? formatDateTime(u.last_sign_in_at) : 'Never';
+                const initial = (u.email ? u.email.charAt(0).toUpperCase() : '?');
+
+                let actionsHtml = '';
+                if (isYou) {
+                    actionsHtml = `<span style="font-size: 0.75rem; color: #94a3b8; font-style: italic;">Your current active session</span>`;
+                } else {
+                    const roleBtn = `<button class="btn-action-role" data-action="change-role" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" data-role="${escapeHtml(u.role)}">
+                        <i class="fa-solid ${isAdmin ? 'fa-arrow-down' : 'fa-shield-halved'}"></i> ${isAdmin ? 'Demote to Rep' : 'Promote to Admin'}
+                    </button>`;
+
+                    const deleteBtn = !isAdmin
+                        ? `<button class="btn-action-delete" data-action="delete" data-id="${escapeHtml(u.id)}" data-email="${escapeHtml(u.email)}" title="Delete Class Rep">
+                            <i class="fa-solid fa-trash-can"></i> Delete
+                           </button>`
+                        : '';
+
+                    actionsHtml = `<div class="timetable-actions" style="margin-top: 12px;">${roleBtn}${deleteBtn}</div>`;
+                }
+
+                return `
+                    <div class="timetable-card">
+                        <div class="timetable-card-header">
+                            <div class="user-email-cell">
+                                <div class="user-avatar">${initial}</div>
+                                <div>
+                                    <strong style="font-size: 0.9rem; color: #0f172a;">${escapeHtml(u.email)}</strong>
+                                    ${isYou ? '<span class="user-you-tag">You</span>' : ''}
+                                </div>
+                            </div>
+                            <span class="user-role-badge ${isAdmin ? 'admin' : 'class_rep'}">
+                                ${isAdmin ? 'Admin' : 'Class Rep'}
+                            </span>
+                        </div>
+                        <div class="timetable-card-meta" style="margin-top: 10px;">
+                            <div class="timetable-meta-row">
+                                <i class="fa-regular fa-calendar"></i>
+                                <span>Created: ${createdStr}</span>
+                            </div>
+                            <div class="timetable-meta-row">
+                                <i class="fa-regular fa-clock"></i>
+                                <span>Last sign in: ${lastActiveStr}</span>
+                            </div>
+                        </div>
+                        ${actionsHtml}
+                    </div>
+                `;
+            }).join('');
+        }
+    }
+
+    // ── Add User Modal logic ──
+    function openAddUserModal() {
+        if (addUserForm) addUserForm.reset();
+        if (userFormAlert) {
+            userFormAlert.style.display = 'none';
+            userFormAlert.textContent = '';
+        }
+        if (addUserModal) {
+            addUserModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+            setTimeout(() => {
+                if (userEmail) userEmail.focus();
+            }, 100);
+        }
+    }
+
+    function closeAddUserModal() {
+        if (addUserModal) {
+            addUserModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        if (addUserForm) addUserForm.reset();
+        if (userPassword) userPassword.value = '';
+        if (userFormAlert) {
+            userFormAlert.style.display = 'none';
+            userFormAlert.textContent = '';
+        }
+    }
+
+    async function handleAddUserFormSubmit(e) {
+        if (e) e.preventDefault();
+        if (isSavingUser) return;
+
+        const emailVal = userEmail ? userEmail.value.trim().toLowerCase() : '';
+        const passwordVal = userPassword ? userPassword.value : '';
+
+        if (!emailVal || !emailVal.includes('@')) {
+            if (userFormAlert) {
+                userFormAlert.style.display = 'block';
+                userFormAlert.textContent = 'Please enter a valid email address.';
+            }
+            if (userEmail) userEmail.focus();
+            return;
+        }
+
+        if (!passwordVal || passwordVal.length < 6) {
+            if (userFormAlert) {
+                userFormAlert.style.display = 'block';
+                userFormAlert.textContent = 'Password must be at least 6 characters long.';
+            }
+            if (userPassword) userPassword.focus();
+            return;
+        }
+
+        if (userFormAlert) userFormAlert.style.display = 'none';
+
+        isSavingUser = true;
+        if (btnSubmitUser) btnSubmitUser.disabled = true;
+        if (btnSubmitUserText) btnSubmitUserText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Creating...';
+
+        try {
+            await invokeManageUsers({
+                action: 'create',
+                email: emailVal,
+                password: passwordVal
+            });
+
+            closeAddUserModal();
+            showToast(`Class Rep account created for ${emailVal}.`);
+            fetchUsersList();
+
+        } catch (err) {
+            console.error('Failed to create user:', err);
+            if (userFormAlert) {
+                userFormAlert.style.display = 'block';
+                userFormAlert.textContent = err.message || 'Failed to create user account.';
+            }
+        } finally {
+            isSavingUser = false;
+            if (btnSubmitUser) btnSubmitUser.disabled = false;
+            if (btnSubmitUserText) btnSubmitUserText.textContent = 'Create Class Rep';
+            if (userPassword) userPassword.value = '';
+        }
+    }
+
+    // ── Delete User Modal logic ──
+    function openDeleteUserModal(userId, email) {
+        currentDeletingUserId = userId;
+        if (deleteUserEmail) deleteUserEmail.textContent = email || 'this user';
+        if (userDeleteModal) {
+            userDeleteModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeDeleteUserModal() {
+        if (userDeleteModal) {
+            userDeleteModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        currentDeletingUserId = null;
+    }
+
+    async function handleConfirmDeleteUser() {
+        if (!currentDeletingUserId || isDeletingUser) return;
+
+        isDeletingUser = true;
+        if (btnConfirmDeleteUser) btnConfirmDeleteUser.disabled = true;
+        if (btnDeleteUserText) btnDeleteUserText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Deleting...';
+
+        try {
+            await invokeManageUsers({
+                action: 'delete',
+                targetUserId: currentDeletingUserId
+            });
+
+            closeDeleteUserModal();
+            showToast('User account permanently deleted.');
+            fetchUsersList();
+
+        } catch (err) {
+            console.error('Failed to delete user:', err);
+            showToast(err.message || 'Failed to delete user account.', 'error');
+            closeDeleteUserModal();
+        } finally {
+            isDeletingUser = false;
+            if (btnConfirmDeleteUser) btnConfirmDeleteUser.disabled = false;
+            if (btnDeleteUserText) btnDeleteUserText.textContent = 'Delete Account';
+        }
+    }
+
+    // ── Role Change Modal logic ──
+    function openChangeRoleModal(userId, email, currentRole) {
+        currentRoleChangeUserId = userId;
+        currentRoleChangeTargetRole = currentRole === 'admin' ? 'class_rep' : 'admin';
+
+        if (roleUserEmail) roleUserEmail.textContent = email || 'this user';
+        if (roleTargetRoleName) {
+            roleTargetRoleName.textContent = currentRoleChangeTargetRole === 'admin' ? 'Administrator' : 'Class Representative';
+        }
+        if (roleChangeHint) {
+            roleChangeHint.textContent = currentRoleChangeTargetRole === 'admin'
+                ? 'Administrators have full privileges including User Management.'
+                : 'Class Representatives can manage timetables and announcements, but cannot manage users.';
+        }
+        if (roleModalAlert) {
+            roleModalAlert.style.display = 'none';
+            roleModalAlert.textContent = '';
+        }
+        if (userRoleModal) {
+            userRoleModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    function closeChangeRoleModal() {
+        if (userRoleModal) {
+            userRoleModal.classList.remove('show');
+            document.body.style.overflow = '';
+        }
+        currentRoleChangeUserId = null;
+        currentRoleChangeTargetRole = '';
+    }
+
+    async function handleConfirmChangeRole() {
+        if (!currentRoleChangeUserId || !currentRoleChangeTargetRole || isChangingRole) return;
+
+        isChangingRole = true;
+        if (btnConfirmChangeRole) btnConfirmChangeRole.disabled = true;
+        if (btnChangeRoleText) btnChangeRoleText.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Updating...';
+
+        try {
+            await invokeManageUsers({
+                action: 'update_role',
+                targetUserId: currentRoleChangeUserId,
+                newRole: currentRoleChangeTargetRole
+            });
+
+            closeChangeRoleModal();
+            showToast('User role updated successfully.');
+            fetchUsersList();
+
+        } catch (err) {
+            console.error('Failed to update role:', err);
+            if (roleModalAlert) {
+                roleModalAlert.style.display = 'block';
+                roleModalAlert.textContent = err.message || 'Failed to update user role.';
+            } else {
+                showToast(err.message || 'Failed to update user role.', 'error');
+            }
+        } finally {
+            isChangingRole = false;
+            if (btnConfirmChangeRole) btnConfirmChangeRole.disabled = false;
+            if (btnChangeRoleText) btnChangeRoleText.textContent = 'Confirm Change';
+        }
+    }
+
+    // ── Table / Cards Click Handlers for Users ──
+    function handleUserActionClick(e) {
+        const btn = e.target.closest('button[data-action]');
+        if (!btn) return;
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
+        const email = btn.getAttribute('data-email');
+        const role = btn.getAttribute('data-role');
+
+        if (action === 'delete') {
+            openDeleteUserModal(id, email);
+        } else if (action === 'change-role') {
+            openChangeRoleModal(id, email, role);
+        }
+    }
+
+    if (usersTbody) usersTbody.addEventListener('click', handleUserActionClick);
+    if (usersMobileCards) usersMobileCards.addEventListener('click', handleUserActionClick);
+
+    if (btnAddUserModal) btnAddUserModal.addEventListener('click', openAddUserModal);
+    if (btnEmptyAddUser) btnEmptyAddUser.addEventListener('click', openAddUserModal);
+    if (addUserModalCloseBtn) addUserModalCloseBtn.addEventListener('click', closeAddUserModal);
+    if (addUserCancelBtn) addUserCancelBtn.addEventListener('click', closeAddUserModal);
+    if (addUserForm) addUserForm.addEventListener('submit', handleAddUserFormSubmit);
+
+    if (userDeleteModalCloseBtn) userDeleteModalCloseBtn.addEventListener('click', closeDeleteUserModal);
+    if (userDeleteCancelBtn) userDeleteCancelBtn.addEventListener('click', closeDeleteUserModal);
+    if (btnConfirmDeleteUser) btnConfirmDeleteUser.addEventListener('click', handleConfirmDeleteUser);
+
+    if (userRoleModalCloseBtn) userRoleModalCloseBtn.addEventListener('click', closeChangeRoleModal);
+    if (userRoleCancelBtn) userRoleCancelBtn.addEventListener('click', closeChangeRoleModal);
+    if (btnConfirmChangeRole) btnConfirmChangeRole.addEventListener('click', handleConfirmChangeRole);
+
+    if (retryUsersBtn) retryUsersBtn.addEventListener('click', fetchUsersList);
+
     // ── Backdrop & Escape Key Closing ──
     if (timetableModal) {
         timetableModal.addEventListener('click', function (e) {
@@ -1359,6 +1851,21 @@
             if (e.target === announcementDeleteModal) closeDeleteAnnouncementModal();
         });
     }
+    if (addUserModal) {
+        addUserModal.addEventListener('click', function (e) {
+            if (e.target === addUserModal) closeAddUserModal();
+        });
+    }
+    if (userDeleteModal) {
+        userDeleteModal.addEventListener('click', function (e) {
+            if (e.target === userDeleteModal) closeDeleteUserModal();
+        });
+    }
+    if (userRoleModal) {
+        userRoleModal.addEventListener('click', function (e) {
+            if (e.target === userRoleModal) closeChangeRoleModal();
+        });
+    }
 
     document.addEventListener('keydown', function (e) {
         if (e.key === 'Escape') {
@@ -1366,6 +1873,9 @@
             if (deleteModal && deleteModal.classList.contains('show')) closeDeleteModal();
             if (announcementModal && announcementModal.classList.contains('show')) closeAnnouncementModal();
             if (announcementDeleteModal && announcementDeleteModal.classList.contains('show')) closeDeleteAnnouncementModal();
+            if (addUserModal && addUserModal.classList.contains('show')) closeAddUserModal();
+            if (userDeleteModal && userDeleteModal.classList.contains('show')) closeDeleteUserModal();
+            if (userRoleModal && userRoleModal.classList.contains('show')) closeChangeRoleModal();
         }
     });
 
@@ -1385,6 +1895,7 @@
             }
 
             const user = session.user;
+            loggedInUserId = user.id;
 
             const profileResult = await client
                 .from('profiles')
