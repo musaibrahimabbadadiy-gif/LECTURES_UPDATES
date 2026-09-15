@@ -1,16 +1,37 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.8";
 
-// Safe CORS headers
-function getCorsHeaders(req: Request) {
-  const origin = req.headers.get("origin") || "*";
-  return {
-    "Access-Control-Allow-Origin": origin,
+// Strict CORS origin allowlist (no wildcards, no arbitrary reflection)
+const ALLOWED_ORIGINS = new Set([
+  "http://localhost:3000",
+  "http://127.0.0.1:3000",
+  "http://localhost:5500",
+  "http://127.0.0.1:5500"
+]);
+
+// UUID v4 / standard UUID format validator
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+function isValidUuid(id: unknown): id is string {
+  return typeof id === "string" && UUID_REGEX.test(id.trim());
+}
+
+function getCorsHeaders(req: Request): Record<string, string> {
+  const origin = req.headers.get("origin");
+  const headers: Record<string, string> = {
     "Access-Control-Allow-Methods": "POST, OPTIONS",
     "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
     "Access-Control-Max-Age": "86400",
     "Content-Type": "application/json"
   };
+
+  // Only grant Access-Control-Allow-Origin if the incoming origin is explicitly allowlisted
+  if (origin && ALLOWED_ORIGINS.has(origin)) {
+    headers["Access-Control-Allow-Origin"] = origin;
+    headers["Vary"] = "Origin";
+  }
+
+  return headers;
 }
 
 function jsonResponse(data: unknown, status = 200, req?: Request) {
@@ -211,8 +232,8 @@ serve(async (req: Request) => {
     if (action === "delete") {
       const { targetUserId } = body;
 
-      if (!targetUserId || typeof targetUserId !== "string") {
-        return jsonResponse({ error: "Target user ID is required." }, 400, req);
+      if (!targetUserId || !isValidUuid(targetUserId)) {
+        return jsonResponse({ error: "Invalid or malformed target user ID. Must be a valid UUID." }, 400, req);
       }
 
       // Self-lockout protection: Caller cannot delete their own account
@@ -256,8 +277,8 @@ serve(async (req: Request) => {
     if (action === "update_role") {
       const { targetUserId, newRole } = body;
 
-      if (!targetUserId || typeof targetUserId !== "string") {
-        return jsonResponse({ error: "Target user ID is required." }, 400, req);
+      if (!targetUserId || !isValidUuid(targetUserId)) {
+        return jsonResponse({ error: "Invalid or malformed target user ID. Must be a valid UUID." }, 400, req);
       }
 
       if (newRole !== "class_rep" && newRole !== "admin") {

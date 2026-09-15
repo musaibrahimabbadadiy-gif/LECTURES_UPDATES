@@ -1464,14 +1464,61 @@
         showUsersLoading();
         hideUsersError();
 
+        const client = getDbClient();
+
         try {
+            // 1. Try invoking the Edge Function (retrieves full auth details including email)
             const res = await invokeManageUsers({ action: 'list' });
             usersList = res.users || [];
             usersLoadedOnce = true;
             renderUsersUI();
-        } catch (err) {
-            console.error('Failed to fetch users list:', err);
-            showUsersError(err.message || 'Unable to load user accounts.');
+            return;
+        } catch (edgeErr) {
+            console.warn('Edge Function invoke failed or not yet deployed. Trying direct profiles query:', edgeErr);
+
+            // 2. Direct database query fallback via Supabase client (Admins have SELECT permission on profiles)
+            if (client) {
+                try {
+                    const sessionRes = await client.auth.getSession();
+                    const sessionUser = sessionRes.data ? sessionRes.data.session ? sessionRes.data.session.user : null : null;
+
+                    const { data: profiles, error: profileErr } = await client
+                        .from('profiles')
+                        .select('id, role, created_at, updated_at')
+                        .order('created_at', { ascending: false });
+
+                    if (profileErr) throw profileErr;
+
+                    if (profiles && profiles.length > 0) {
+                        usersList = profiles.map(p => {
+                            const isCurrent = p.id === loggedInUserId;
+                            return {
+                                id: p.id,
+                                email: isCurrent ? (sessionUser ? sessionUser.email : 'Administrator') : `Class Rep (${p.id.slice(0, 8)}...)`,
+                                role: p.role || 'class_rep',
+                                created_at: p.created_at,
+                                last_sign_in_at: isCurrent && sessionUser ? sessionUser.last_sign_in_at : null,
+                                is_current_user: isCurrent
+                            };
+                        });
+
+                        // Sort: admin first, then by created_at desc
+                        usersList.sort((a, b) => {
+                            if (a.role === 'admin' && b.role !== 'admin') return -1;
+                            if (a.role !== 'admin' && b.role === 'admin') return 1;
+                            return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+                        });
+
+                        usersLoadedOnce = true;
+                        renderUsersUI();
+                        return;
+                    }
+                } catch (dbErr) {
+                    console.error('Direct profile query error:', dbErr);
+                }
+            }
+
+            showUsersError('Unable to reach manage-users Edge Function. Please deploy the function or check your connection.');
         }
     }
 
