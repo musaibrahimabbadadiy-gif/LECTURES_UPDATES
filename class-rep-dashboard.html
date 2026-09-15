@@ -39,13 +39,15 @@
         .dash-layout {
             display: grid;
             grid-template-columns: 260px 1fr;
-            grid-template-rows: auto 1fr;
+            grid-template-rows: 68px 1fr;
             min-height: 100vh;
+            width: 100%;
         }
 
         /* ── Top header ── */
         .dash-topbar {
             grid-column: 1 / -1;
+            grid-row: 1;
             display: flex;
             align-items: center;
             justify-content: space-between;
@@ -158,6 +160,8 @@
 
         /* ── Sidebar ── */
         .dash-sidebar {
+            grid-column: 1;
+            grid-row: 2;
             background: #fff;
             border-right: 1px solid #e8e8e8;
             padding: 28px 0;
@@ -229,6 +233,10 @@
 
         /* ── Main content ── */
         .dash-main {
+            grid-column: 2;
+            grid-row: 2;
+            min-width: 0;
+            width: 100%;
             padding: 32px 36px 60px;
             overflow-y: auto;
             background: #f8f9fb;
@@ -1092,6 +1100,9 @@
         .announcement-meta-date {
             font-size: 0.78rem;
             color: #64748b;
+            white-space: nowrap;
+        }
+
         /* ── Users Management UI Styles ── */
         .user-role-badge {
             display: inline-flex;
@@ -1325,9 +1336,6 @@
                 </a>
             </div>
         </aside>
-
-        <!-- ── Sidebar overlay (mobile) ── -->
-        <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
         <!-- ── Main content ── -->
         <main class="dash-main" id="dashMain">
@@ -1839,6 +1847,9 @@
             </div>
         </div>
     </div>
+
+    <!-- ── Sidebar overlay (mobile) ── -->
+    <div class="sidebar-overlay" id="sidebarOverlay"></div>
 
     <!-- ═══════════ Toast Container ═══════════ -->
     <div class="toast-container" id="toastContainer" aria-live="polite" aria-atomic="true"></div>
