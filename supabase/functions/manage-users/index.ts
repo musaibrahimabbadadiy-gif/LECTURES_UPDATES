@@ -6,7 +6,8 @@ const ALLOWED_ORIGINS = new Set([
   "http://localhost:3000",
   "http://127.0.0.1:3000",
   "http://localhost:5500",
-  "http://127.0.0.1:5500"
+  "http://127.0.0.1:5500",
+  "https://lectures-updates.vercel.app"
 ]);
 
 // UUID v4 / standard UUID format validator
