@@ -1,6 +1,5 @@
 
 
-````markdown
 # NWU SE | Student Platform
 
 > An open-source academic information platform built specifically for 200 Level Software Engineering students at Northwest University, Kano.
