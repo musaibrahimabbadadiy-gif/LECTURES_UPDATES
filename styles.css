@@ -107,7 +107,9 @@ body{background:#fff!important;color:#111!important;letter-spacing:0; width: 100
 .proof-row{color:#777!important}.proof-row i{color:#111!important}
 .dashboard-window{border-radius:18px!important;padding:24px!important;box-shadow:0 24px 60px rgba(17,17,17,.12)!important}
 .dashboard-lecture{border-radius:12px!important}.next-row{border-radius:10px!important}
-.floating-stat{border-radius:12px!important;box-shadow:0 15px 35px rgba(17,17,17,.12)!important}
+.floating-stat{border-radius:12px!important;box-shadow:0 15px 35px rgba(17,17,17,.12)!important;cursor:pointer;text-decoration:none!important;color:inherit;transition:transform var(--ease),box-shadow var(--ease),border-color var(--ease)}
+.floating-stat:hover{transform:translateY(-4px)!important;box-shadow:0 22px 50px rgba(17,17,17,.18)!important;border-color:rgba(17,17,17,.3)!important}
+#timetable,#courses,#updates{scroll-margin-top:84px}
 .timetable-section,.courses-section,.updates-section{padding-top:58px!important}
 .section-intro h2{font-weight:600!important;letter-spacing:-.055em!important}
 .day-tabs{border:0!important;border-radius:10px!important;background:#f3f3f3!important;padding:4px!important}

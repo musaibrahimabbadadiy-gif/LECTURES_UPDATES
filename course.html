@@ -10,12 +10,18 @@
     <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.6.0/css/all.min.css">
     <link rel="stylesheet" href="styles.css">
+    <link rel="icon" type="image/jpeg" href="assets/NWU.jpeg">
 </head>
 <body class="course-page">
     <div class="ambient ambient-one"></div><div class="ambient ambient-two"></div><div class="grid-background"></div>
     <header class="site-header">
+<<<<<<< HEAD
         <a class="brand" href="index.html"><span class="brand-mark"><img src="<img style="border-radius:50%;src="assets/NWU.jpeg" height="80" width="80" />"</span><span class="brand-copy"><strong>NWU SE</strong><small>Software Engineering</small></span></a>
         <a class="text-button" href="index.html#home"><i class="fa-solid fa-arrow-left"></i> Back to Home</a>
+=======
+        <a class="brand" href="index.html" aria-label="NWU Software Engineering home"><span class="brand-mark"><img style="border-radius:50%;" src="assets/NWU.jpeg" alt="NWU Logo" height="80" width="80" /></span><span class="brand-copy"><strong>NWU SE</strong><small>Software Engineering</small></span></a>
+        <a class="text-button" href="index.html#courses"><i class="fa-solid fa-arrow-left"></i> Back to Courses</a>
+>>>>>>> bf074dc4c229eeaef7d2937f42e31fedd97f2e29
     </header>
     <main class="course-detail section-wrap">
         <div class="course-detail-heading"><div><p class="eyebrow">COURSE DETAILS</p><h1 id="courseCode">COS 202</h1><h2 id="courseTitle">Computer Programming II</h2></div><button class="accent-button compact" id="courseShare"><i class="fa-solid fa-arrow-up-from-bracket"></i> Share course</button></div>
@@ -27,6 +33,8 @@
     </main>
     <div class="modal-backdrop" id="shareModal" aria-hidden="true"><div class="share-modal"><button class="close-button" id="closeShare"><i class="fa-solid fa-xmark"></i></button><p class="eyebrow">SHARE</p><h2>Share this course with your classmates.</h2><p class="share-context" id="shareContext"></p><div class="share-options"><button data-share="whatsapp"><i class="fa-brands fa-whatsapp"></i><span>WhatsApp</span></button><button data-share="facebook"><i class="fa-brands fa-facebook-f"></i><span>Facebook</span></button><button data-share="x"><i class="fa-brands fa-x-twitter"></i><span>X / Twitter</span></button><button data-share="telegram"><i class="fa-brands fa-telegram"></i><span>Telegram</span></button><button data-share="copy"><i class="fa-regular fa-copy"></i><span>Copy Link</span></button><button data-share="more"><i class="fa-solid fa-ellipsis"></i><span>More</span></button></div></div></div>
     <div class="toast" id="toast"><i class="fa-solid fa-circle-check"></i><span id="toastMessage"></span></div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="supabase.js"></script>
     <script src="course.js"></script>
 </body>
 </html>
