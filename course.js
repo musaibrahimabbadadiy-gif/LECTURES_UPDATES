@@ -1,4 +1,4 @@
-﻿const fallbackCourseData = {
+const fallbackCourseData = {
   COS202: { code: "COS 202", title: "Computer Programming II", units: "", day: "Thursday", times: ["10:00 AM – 12:00 PM"], venue: "7th Floor, City Campus (Venue to be decided)" },
   INS204: { code: "INS 204", title: "System Analysis and Design", units: "", day: "Thursday", times: ["12:00 PM – 2:00 PM"], venue: "7th Floor, City Campus (Venue to be decided)" },
   GST212: { code: "GST 212", title: "Philosophy, Logic and Human Existence", units: "", day: "Friday", times: ["8:00 AM – 10:00 AM"], venue: "Science Theatre B, Main Campus" },
@@ -13,6 +13,7 @@ const courseUrl = window.location.href;
 
 let currentCourse = null;
 let currentTimetable = null;
+let currentTimetableEntries = [];
 let shareText = "";
 
 function normalizeCourseKey(value) {
@@ -29,6 +30,28 @@ function getFallbackCourseRecord(key) {
   return fallbackCourseData.COS202;
 }
 
+function normalizeTimetableRecords(value) {
+  const records = Array.isArray(value) ? value : (value ? [value] : []);
+  return records
+    .filter(record => record && typeof record === "object")
+    .map(record => ({
+      day: record.day || "TBA",
+      start_time: record.start_time || null,
+      end_time: record.end_time || null,
+      venue: record.venue || "TBA"
+    }));
+}
+
+function sortTimetableRecords(records) {
+  const dayIndex = { monday: 0, tuesday: 1, wednesday: 2, thursday: 3, friday: 4, saturday: 5, sunday: 6 };
+  return [...records].sort((a, b) => {
+    const dayA = dayIndex[(a.day || "").toLowerCase()] ?? 99;
+    const dayB = dayIndex[(b.day || "").toLowerCase()] ?? 99;
+    if (dayA !== dayB) return dayA - dayB;
+    return String(a.start_time || "").localeCompare(String(b.start_time || ""));
+  });
+}
+
 function formatSqlTime(timeStr) {
   if (!timeStr) return "";
   const parts = timeStr.split(":");
@@ -42,7 +65,10 @@ function formatSqlTime(timeStr) {
 
 function formatTimeRange(start, end) {
   if (!start || !end) return "TBA";
-  return `${formatSqlTime(start)} – ${formatSqlTime(end)}`;
+  const formattedStart = formatSqlTime(start);
+  const formattedEnd = formatSqlTime(end);
+  if (!formattedStart || !formattedEnd) return "TBA";
+  return `${formattedStart} – ${formattedEnd}`;
 }
 
 function getNextWeekdayDate(dayName) {
@@ -58,15 +84,27 @@ function getNextWeekdayDate(dayName) {
   return `${y}${m}${d}`;
 }
 
-function applyCourseDetails(courseRecord, timetableRecord) {
+function applyCourseDetails(courseRecord, timetableRecords) {
   currentCourse = courseRecord;
-  currentTimetable = timetableRecord || null;
+  currentTimetableEntries = sortTimetableRecords(normalizeTimetableRecords(timetableRecords));
+  currentTimetable = currentTimetableEntries[0] || null;
 
-  const day = currentTimetable ? currentTimetable.day : (courseRecord.day || "TBA");
-  const time = currentTimetable
-    ? formatTimeRange(currentTimetable.start_time, currentTimetable.end_time)
-    : (courseRecord.times && courseRecord.times.length ? courseRecord.times.join(", ") : "TBA");
-  const venue = currentTimetable ? currentTimetable.venue : (courseRecord.venue || "TBA");
+  const slots = currentTimetableEntries.length
+    ? currentTimetableEntries.map(record => ({
+      day: record.day || "TBA",
+      time: formatTimeRange(record.start_time, record.end_time),
+      venue: record.venue || "TBA"
+    }))
+    : [{
+      day: courseRecord.day || "TBA",
+      time: (courseRecord.times && courseRecord.times.length ? courseRecord.times.join(", ") : "TBA"),
+      venue: courseRecord.venue || "TBA"
+    }];
+  const uniqueDays = [...new Set(slots.map(slot => slot.day || "TBA"))];
+  const uniqueVenues = [...new Set(slots.map(slot => slot.venue || "TBA"))];
+  const day = uniqueDays.join(", ");
+  const time = slots.map(slot => slot.time).join(" / ");
+  const venue = uniqueVenues.join(" / ");
   const units = courseRecord.credit_units ? String(courseRecord.credit_units) : (courseRecord.units || "N/A");
 
   $("#courseCode").textContent = courseRecord.code;
@@ -75,7 +113,7 @@ function applyCourseDetails(courseRecord, timetableRecord) {
   $("#courseDay").textContent = day;
   $("#courseTime").textContent = time;
   $("#courseVenue").textContent = venue;
-  $("#scheduleCopy").textContent = `${day} · ${time} · ${venue}`;
+  $("#scheduleCopy").textContent = slots.map(slot => `${slot.day} · ${slot.time} · ${slot.venue}`).join(" | ");
   $("#overviewTitle").textContent = `Keep ${courseRecord.title} clear, focused, and easy to follow.`;
 
   shareText = `${courseRecord.code} — ${courseRecord.title}\n${day}, ${time}\n📍 ${venue}\n\nView course details:`;
@@ -154,13 +192,18 @@ function share(network) {
 
 function createCalendarFile() {
   if (!currentCourse) return;
-  const day = currentTimetable ? currentTimetable.day : (currentCourse.day || "Monday");
-  const time = currentTimetable
-    ? formatTimeRange(currentTimetable.start_time, currentTimetable.end_time)
-    : (currentCourse.times && currentCourse.times.length ? currentCourse.times.join(", ") : "10:00 AM – 12:00 PM");
-  const venue = currentTimetable ? currentTimetable.venue : (currentCourse.venue || "FSBMS");
-  const [start, end] = time.split(" – ");
-  const eventDate = getNextWeekdayDate(day);
+  const fallbackTime = (currentCourse.times && currentCourse.times.length ? currentCourse.times[0] : "10:00 AM – 12:00 PM");
+  const fallbackDay = currentCourse.day || "Monday";
+  const fallbackVenue = currentCourse.venue || "FSBMS";
+  const entries = currentTimetableEntries.length
+    ? currentTimetableEntries
+    : [{
+      day: fallbackDay,
+      start_time: null,
+      end_time: null,
+      venue: fallbackVenue,
+      formattedTime: fallbackTime
+    }];
 
   const toIcsTime = value => {
     const match = (value || "").match(/(\d+):(\d+)\s*(AM|PM)/i);
@@ -170,16 +213,27 @@ function createCalendarFile() {
     return `${String(hour).padStart(2, "0")}${match[2]}00`;
   };
 
+  const events = entries.map(entry => {
+    const formatted = entry.formattedTime || formatTimeRange(entry.start_time, entry.end_time);
+    const [start, end] = formatted.split(" – ");
+    const eventDate = getNextWeekdayDate(entry.day || fallbackDay);
+    const safeStart = start || "10:00 AM";
+    const safeEnd = end || "12:00 PM";
+    return [
+      "BEGIN:VEVENT",
+      `SUMMARY:${currentCourse.code} — ${currentCourse.title}`,
+      `LOCATION:${entry.venue || fallbackVenue}`,
+      "DESCRIPTION:NWU Software Engineering lecture",
+      `DTSTART:${eventDate}T${toIcsTime(safeStart)}`,
+      `DTEND:${eventDate}T${toIcsTime(safeEnd)}`,
+      "END:VEVENT"
+    ].join("\r\n");
+  });
+
   const ics = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "BEGIN:VEVENT",
-    `SUMMARY:${currentCourse.code} — ${currentCourse.title}`,
-    `LOCATION:${venue}`,
-    "DESCRIPTION:NWU Software Engineering lecture",
-    `DTSTART:${eventDate}T${toIcsTime(start)}`,
-    `DTEND:${eventDate}T${toIcsTime(end)}`,
-    "END:VEVENT",
+    ...events,
     "END:VCALENDAR"
   ].join("\r\n");
 
@@ -200,54 +254,57 @@ async function loadCoursePage() {
   $("#scheduleCopy").textContent = "Loading schedule...";
 
   try {
-    let courseRecord = getFallbackCourseRecord(normalizedKey);
-
-    if (typeof db !== "undefined" && db) {
-      const { data: courses, error } = await db
-        .from("courses")
-        .select(`
-          id,
-          code,
-          title,
-          credit_units,
-          timetable (
-            id,
-            day,
-            start_time,
-            end_time,
-            venue
-          )
-        `);
-
-      if (!error && courses && courses.length) {
-        const matched = courses.find(c => c.code && normalizeCourseKey(c.code) === normalizedKey) || courses[0];
-        if (matched) {
-          courseRecord = {
-            ...matched,
-            code: matched.code,
-            title: matched.title,
-            units: matched.credit_units ? String(matched.credit_units) : "",
-            credit_units: matched.credit_units,
-            day: matched.timetable && matched.timetable[0] ? matched.timetable[0].day : "TBA",
-            venue: matched.timetable && matched.timetable[0] ? matched.timetable[0].venue : "TBA",
-            times: matched.timetable && matched.timetable[0] ? [formatTimeRange(matched.timetable[0].start_time, matched.timetable[0].end_time)] : ["TBA"]
-          };
-        }
-      }
+    if (typeof db === "undefined" || !db) {
+      throw new Error("Supabase client is not initialised.");
     }
 
-    const timetableRecord = (courseRecord && courseRecord.timetable && courseRecord.timetable.length)
-      ? courseRecord.timetable[0]
-      : (courseRecord && courseRecord.day ? { day: courseRecord.day, start_time: null, end_time: null, venue: courseRecord.venue || "TBA" } : null);
+    const { data: courses, error } = await db
+      .from("courses")
+      .select(`
+        id,
+        code,
+        title,
+        credit_units,
+        timetable (
+          id,
+          day,
+          start_time,
+          end_time,
+          venue
+        )
+      `);
 
-    applyCourseDetails(courseRecord, timetableRecord);
+    if (error) throw new Error(`Failed to load courses: ${error.message}`);
+    if (!courses || courses.length === 0) throw new Error("No courses found in database.");
+
+    const matched = courses.find(course => course?.code && normalizeCourseKey(course.code) === normalizedKey);
+    if (!matched) throw new Error(`Course ${normalizedKey} was not found in database.`);
+
+    const timetableEntries = sortTimetableRecords(normalizeTimetableRecords(matched.timetable));
+    const fallbackRecord = getFallbackCourseRecord(normalizedKey);
+    const courseRecord = {
+      ...matched,
+      code: matched.code || fallbackRecord.code,
+      title: matched.title || fallbackRecord.title,
+      units: matched.credit_units ? String(matched.credit_units) : "",
+      credit_units: matched.credit_units,
+      day: timetableEntries[0]?.day || "TBA",
+      venue: timetableEntries[0]?.venue || "TBA",
+      times: timetableEntries.length
+        ? timetableEntries.map(entry => formatTimeRange(entry.start_time, entry.end_time))
+        : ["TBA"]
+    };
+
+    applyCourseDetails(courseRecord, timetableEntries);
   } catch (err) {
     console.error("Failed to load course details:", err);
-    const fallbackRecord = getFallbackCourseRecord(normalizedKey);
-    applyCourseDetails(fallbackRecord, null);
     $("#courseCode").textContent = "Error";
     $("#courseTitle").textContent = "Unable to load course details";
-    $("#overviewTitle").textContent = "A database connection error occurred.";
+    $("#overviewTitle").textContent = err?.message || "A database connection error occurred.";
+    $("#courseDay").textContent = "Unavailable";
+    $("#courseTime").textContent = "Unavailable";
+    $("#courseVenue").textContent = "Unavailable";
+    $("#courseUnits").textContent = "N/A";
     $("#scheduleCopy").innerHTML = `
       <span style="color: var(--muted); margin-right: 12px;">Could not retrieve schedule.</span>
       <button class="accent-button compact" id="retryCourseBtn" style="cursor: pointer; margin-top: 10px;">
