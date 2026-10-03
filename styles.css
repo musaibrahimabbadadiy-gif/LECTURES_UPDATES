@@ -153,8 +153,7 @@ body{background:#fff!important;color:#111!important;letter-spacing:0; width: 100
 .day-lecture-preview-item small i{margin-right:4px;color:var(--cyan)}
 .mobile-menu .day-dropdown-menu{width:auto}
 .mobile-menu .day-menu-label{padding-left:10px}
-#timetable{display:none!important}
-#courses,#updates{display:none!important}
+
 .dropdown-timetable-list{display:grid;gap:9px;padding:4px}
 .dropdown-timetable-day{display:grid;gap:6px}
 .dropdown-timetable-day+.dropdown-timetable-day{padding-top:9px;border-top:1px solid var(--line)}
