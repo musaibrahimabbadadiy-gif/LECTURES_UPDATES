@@ -163,3 +163,14 @@ body{background:#fff!important;color:#111!important;letter-spacing:0; width: 100
 .dropdown-update-item>strong{color:var(--text);font-size:.75rem}
 .dropdown-update-item p{margin:0;color:var(--muted);font-size:.68rem;line-height:1.45}
 .mobile-menu .content-dropdown-menu{max-height:55vh;overflow:auto;padding:6px 8px 6px 10px}
+
+.dropdown-day-list{display:grid;gap:3px}
+.dropdown-day-item{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 11px;background:transparent;color:var(--muted);text-align:left;font-size:.76rem;transition:background var(--ease),color var(--ease)}
+.dropdown-day-item:hover,.dropdown-day-item.active{background:var(--surface-2);color:var(--text)}
+.dropdown-day-item small,.dropdown-empty,.dropdown-update-item small{color:var(--muted);font-size:.65rem}
+.dropdown-empty{padding:9px 11px;line-height:1.5}
+.dropdown-retry{justify-self:start;margin:0 11px 8px;padding:6px 10px;background:var(--surface-2);color:var(--text);font-size:.68rem}
+.dropdown-section-label{display:block;padding:5px 11px;color:var(--muted);font-size:.62rem;font-weight:700;letter-spacing:.08em}
+.dropdown-day-item:focus-visible,.dropdown-retry:focus-visible,.nav-dropdown>summary:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+.dropdown-course-item:hover{background:var(--surface)!important}
+.dropdown-update-item small{margin-top:2px}
