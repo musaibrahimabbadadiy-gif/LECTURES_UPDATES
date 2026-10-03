@@ -120,3 +120,44 @@ body{background:#fff!important;color:#111!important;letter-spacing:0; width: 100
 .notification-panel,.share-modal{border-radius:16px!important}.share-options button{border-radius:9px!important}
 @media(max-width:900px){.hero{gap:38px!important;padding-top:52px!important}.dashboard-stage{min-height:460px!important}}
 @media(max-width:560px){.hero h1{letter-spacing:-.055em!important}.hero h1 em{text-decoration-thickness:3px;text-underline-offset:5px}.dashboard-window{padding:18px!important}.course-directory{gap:7px!important}}
+
+.nav-dropdown{position:relative}
+.nav-dropdown>summary{display:flex;align-items:center;gap:8px;list-style:none;color:var(--muted);font-size:.76rem;letter-spacing:.01em;cursor:pointer;transition:color var(--ease)}
+.nav-dropdown>summary::-webkit-details-marker{display:none}
+.nav-dropdown>summary:hover,.nav-dropdown[open]>summary{color:var(--text)}
+.nav-dropdown>summary i{font-size:.62rem;transition:transform var(--ease)}
+.nav-dropdown[open]>summary i{transform:rotate(180deg)}
+.nav-dropdown-menu{position:absolute;top:100%;left:50%;z-index:10;display:grid;min-width:210px;max-height:70vh;overflow:auto;padding:7px;background:var(--surface);border:1px solid var(--line);box-shadow:var(--shadow);transform:translateX(-50%)}
+.nav-dropdown-menu a{display:block;padding:9px 11px;color:var(--muted);font-size:.76rem;line-height:1.4;white-space:nowrap;transition:background var(--ease),color var(--ease)}
+.nav-dropdown-menu a:hover{background:var(--surface-2);color:var(--text)}
+.mobile-menu .nav-dropdown{width:100%}
+.mobile-menu .nav-dropdown>summary{justify-content:space-between;font-size:.9rem}
+.mobile-menu .nav-dropdown-menu{position:static;max-height:none;min-width:0;margin-top:8px;padding:0 0 0 10px;border:0;border-left:1px solid var(--line);box-shadow:none;transform:none}
+.mobile-menu .nav-dropdown-menu a{padding:8px 10px;white-space:normal}
+.day-dropdown-menu{width:min(330px,calc(100vw - 24px))}
+.day-menu-label{display:block;padding:7px 11px 5px;color:var(--muted);font-size:.66rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.day-lecture-preview[hidden]{display:none}
+.day-lecture-preview{display:grid;gap:8px;margin:6px 4px 4px;padding-top:10px;border-top:1px solid var(--line)}
+.day-lecture-preview-heading{color:var(--cyan);font-size:.67rem;letter-spacing:.08em}
+.day-lecture-preview-item{padding:10px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px}
+.day-lecture-preview-item>div{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.day-lecture-preview-item>div strong{color:var(--text);font-size:.7rem}
+.day-lecture-preview-item>div span{color:var(--muted);font-size:.64rem;white-space:nowrap}
+.day-lecture-preview-item p{margin:5px 0;color:var(--text);font-size:.72rem;line-height:1.4;white-space:normal}
+.day-lecture-preview-item small{color:var(--muted);font-size:.64rem}
+.day-lecture-preview-item small i{margin-right:4px;color:var(--cyan)}
+.mobile-menu .day-dropdown-menu{width:auto}
+.mobile-menu .day-menu-label{padding-left:10px}
+#timetable{display:none!important}
+#courses,#updates{display:none!important}
+.content-dropdown-menu{width:min(370px,calc(100vw - 24px));gap:7px}
+.dropdown-course-list,.dropdown-update-list{display:grid;gap:7px}
+.dropdown-course-item{display:grid;gap:3px;padding:10px 11px!important;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;white-space:normal!important}
+.dropdown-course-item strong{color:var(--cyan);font-size:.68rem}
+.dropdown-course-item span{color:var(--text);font-size:.74rem}
+.dropdown-course-item small{color:var(--muted);font-size:.64rem}
+.dropdown-update-item{display:grid;gap:4px;padding:10px 11px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px}
+.dropdown-update-item>span{color:var(--cyan);font-size:.59rem;font-weight:700;letter-spacing:.04em}
+.dropdown-update-item>strong{color:var(--text);font-size:.75rem}
+.dropdown-update-item p{margin:0;color:var(--muted);font-size:.68rem;line-height:1.45}
+.mobile-menu .content-dropdown-menu{max-height:55vh;overflow:auto;padding:6px 8px 6px 10px}
