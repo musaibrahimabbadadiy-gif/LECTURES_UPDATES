@@ -8,9 +8,30 @@ let sharePayload = { text: "Explore the NWU Software Engineering Student Platfor
 const $ = (selector, parent = document) => parent.querySelector(selector);
 const $$ = (selector, parent = document) => [...parent.querySelectorAll(selector)];
 const scheduleList = $("#scheduleList");
+const DAY_ORDER = ["monday", "tuesday", "wednesday", "thursday", "friday", "saturday", "sunday"];
 
 function generateSlug(code) {
   return (code || "").replace(/\s+/g, "");
+}
+
+function formatSqlTime(timeStr) {
+  if (!timeStr) return "";
+  const parts = String(timeStr).split(":");
+  let h = parseInt(parts[0], 10);
+  if (Number.isNaN(h)) return "";
+  const m = parts[1] || "00";
+  const ampm = h >= 12 ? "PM" : "AM";
+  h = h % 12;
+  if (h === 0) h = 12;
+  return `${h}:${m} ${ampm}`;
+}
+
+function formatTimeRange(start, end) {
+  if (!start || !end) return "TBA";
+  const formattedStart = formatSqlTime(start);
+  const formattedEnd = formatSqlTime(end);
+  if (!formattedStart || !formattedEnd) return "TBA";
+  return `${formattedStart} – ${formattedEnd}`;
 }
 
 const DEPARTMENT_TIMETABLE = {
@@ -152,10 +173,12 @@ function renderDayDropdown(message) {
   });
 }
 
-function renderTimetableDropdown() {
+function renderTimetableDropdown(message) {
   const days = Object.entries(fetchedTimetable);
   $$(".dropdown-timetable-list").forEach(list => {
-    list.innerHTML = days.length
+    list.innerHTML = message
+      ? `<p class="dropdown-empty">${message}</p><button class="dropdown-retry" type="button" data-retry="timetable">Retry</button>`
+      : days.length
       ? days.map(([day, lectures]) => `
         <section class="dropdown-timetable-day">
           <strong class="dropdown-timetable-day-heading">${day.toUpperCase()}</strong>
@@ -422,56 +445,153 @@ function addToCalendar(code) {
   showToast("Calendar event downloaded.");
 }
 
-function fetchAndRender() {
-  fetchedTimetable = Object.fromEntries(
-    Object.entries(DEPARTMENT_TIMETABLE).map(([day, lectures]) => [
-      day,
-      lectures.map(lecture => ({
-        ...lecture,
-        creditUnits: "Lecture session",
-        slug: generateSlug(lecture.code)
-      }))
-    ])
-  );
+async function fetchAndRender() {
+  if (scheduleList) {
+    scheduleList.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:0.85rem;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i> Loading lecture schedule...</div>`;
+  }
+  const courseDir = $("#courseDirectory");
+  if (courseDir) {
+    courseDir.innerHTML = `<div style="text-align:center; padding:48px; color:var(--muted); font-size:0.85rem; grid-column:1 / -1;"><i class="fa-solid fa-spinner fa-spin" style="margin-right:8px;"></i> Loading courses...</div>`;
+  }
+  renderCourseDropdowns("Loading courses...");
+  renderDayDropdown("Loading lecture days...");
+  renderTimetableDropdown("Loading lecture timetable...");
 
-  const uniqueCourses = new Map();
-  Object.values(fetchedTimetable).flat().forEach(lecture => {
-    if (!uniqueCourses.has(lecture.code)) {
-      uniqueCourses.set(lecture.code, {
-        code: lecture.code,
-        title: lecture.title,
-        slug: lecture.slug
-      });
+  try {
+    if (typeof db === "undefined" || !db) {
+      throw new Error("Supabase client not initialised.");
     }
-  });
-  fetchedCourses = [...uniqueCourses.values()];
 
-  const countBadge = $(".section-count");
-  if (countBadge) {
-    countBadge.innerHTML = `${String(fetchedCourses.length).padStart(2, "0")} courses <i class="fa-solid fa-arrow-down"></i>`;
+    const [{ data: timetableData, error: timetableError }, { data: coursesData, error: coursesError }] = await Promise.all([
+      db
+        .from("timetable")
+        .select(`
+          id,
+          day,
+          start_time,
+          end_time,
+          venue,
+          course_id,
+          courses (
+            id,
+            code,
+            title,
+            credit_units
+          )
+        `)
+        .order("day", { ascending: true })
+        .order("start_time", { ascending: true }),
+      db
+        .from("courses")
+        .select("id, code, title, credit_units")
+        .order("code", { ascending: true })
+    ]);
+
+    if (timetableError) throw new Error(`Failed to load timetable: ${timetableError.message}`);
+    if (coursesError) throw new Error(`Failed to load courses: ${coursesError.message}`);
+
+    const courseRecords = coursesData || [];
+    const timetableRecords = timetableData || [];
+    const coursesById = new Map(courseRecords.map(course => [course.id, course]));
+
+    const courseMap = new Map();
+    courseRecords.forEach(course => {
+      if (!course?.code) return;
+      courseMap.set(course.code, {
+        code: course.code,
+        title: course.title || "Untitled",
+        units: course.credit_units ? `${course.credit_units} Credit Units` : "",
+        slug: generateSlug(course.code)
+      });
+    });
+
+    const groupedTimetable = {};
+    timetableRecords.forEach(entry => {
+      const relation = Array.isArray(entry?.courses) ? entry.courses[0] : entry?.courses;
+      const linkedCourse = relation?.code ? relation : (entry?.course_id ? coursesById.get(entry.course_id) : null);
+      if (!linkedCourse?.code) return;
+      const dayKey = (entry.day || "other").toLowerCase();
+      if (!groupedTimetable[dayKey]) groupedTimetable[dayKey] = [];
+      groupedTimetable[dayKey].push({
+        code: linkedCourse.code,
+        title: linkedCourse.title || "Untitled",
+        creditUnits: linkedCourse.credit_units ? `${linkedCourse.credit_units} Credit Units` : "Lecture session",
+        time: formatTimeRange(entry.start_time, entry.end_time),
+        venue: entry.venue || "TBA",
+        slug: generateSlug(linkedCourse.code)
+      });
+      if (!courseMap.has(linkedCourse.code)) {
+        courseMap.set(linkedCourse.code, {
+          code: linkedCourse.code,
+          title: linkedCourse.title || "Untitled",
+          units: linkedCourse.credit_units ? `${linkedCourse.credit_units} Credit Units` : "",
+          slug: generateSlug(linkedCourse.code)
+        });
+      }
+    });
+
+    fetchedTimetable = {};
+    DAY_ORDER.forEach(day => {
+      if (groupedTimetable[day]) fetchedTimetable[day] = groupedTimetable[day];
+    });
+    Object.keys(groupedTimetable).forEach(day => {
+      if (!fetchedTimetable[day]) fetchedTimetable[day] = groupedTimetable[day];
+    });
+    fetchedCourses = [...courseMap.values()];
+
+    const countBadge = $(".section-count");
+    if (countBadge) {
+      countBadge.innerHTML = `${String(fetchedCourses.length).padStart(2, "0")} courses <i class="fa-solid fa-arrow-down"></i>`;
+    }
+
+    const dayTabsContainer = $(".day-tabs");
+    if (dayTabsContainer) {
+      dayTabsContainer.innerHTML = Object.entries(fetchedTimetable).map(([name, lectures]) => `
+        <button class="day-tab ${name === selectedDay ? "active" : ""}" data-day="${name}">
+          ${name[0].toUpperCase() + name.slice(1)}
+          <small>${lectures.length} lecture${lectures.length === 1 ? "" : "s"}</small>
+        </button>
+      `).join("");
+      $$(".day-tab").forEach(tab => tab.addEventListener("click", event => {
+        event.preventDefault();
+        renderTimetable(tab.dataset.day);
+        document.getElementById(tab.dataset.day)?.scrollIntoView({ behavior: "smooth", block: "start" });
+      }));
+    }
+
+    selectedDay = Object.hasOwn(fetchedTimetable, selectedDay) ? selectedDay : (Object.keys(fetchedTimetable)[0] || "tuesday");
+    renderCourses();
+    renderTimetable(selectedDay);
+    renderDayDropdown();
+    renderTimetableDropdown();
+  } catch (err) {
+    console.error("fetchAndRender failed:", err);
+    fetchedCourses = [];
+    fetchedTimetable = {};
+    const countBadge = $(".section-count");
+    if (countBadge) countBadge.innerHTML = `00 courses <i class="fa-solid fa-arrow-down"></i>`;
+    if (scheduleList) {
+      scheduleList.innerHTML = `
+        <div style="text-align:center; padding:48px; color:var(--muted);">
+          <p style="margin-bottom:14px;">Unable to load timetable from database.</p>
+          <button class="accent-button compact dropdown-retry" type="button" data-retry="timetable" style="cursor:pointer;">
+            <i class="fa-solid fa-rotate-right"></i> Retry
+          </button>
+        </div>`;
+    }
+    if (courseDir) {
+      courseDir.innerHTML = `
+        <div style="text-align:center; padding:48px; color:var(--muted); grid-column:1 / -1;">
+          <p style="margin-bottom:14px;">Unable to load courses from database.</p>
+          <button class="accent-button compact dropdown-retry" type="button" data-retry="timetable" style="cursor:pointer;">
+            <i class="fa-solid fa-rotate-right"></i> Retry
+          </button>
+        </div>`;
+    }
+    renderCourseDropdowns("Unable to load courses.");
+    renderDayDropdown("Unable to load lecture days.");
+    renderTimetableDropdown("Unable to load lecture timetable.");
   }
-
-  const dayTabsContainer = $(".day-tabs");
-  if (dayTabsContainer) {
-    dayTabsContainer.innerHTML = Object.entries(fetchedTimetable).map(([name, lectures]) => `
-      <button class="day-tab ${name === selectedDay ? "active" : ""}" data-day="${name}">
-        ${name[0].toUpperCase() + name.slice(1)}
-        <small>${lectures.length} lecture${lectures.length === 1 ? "" : "s"}</small>
-      </button>
-    `).join("");
-
-    $$(".day-tab").forEach(tab => tab.addEventListener("click", event => {
-      event.preventDefault();
-      renderTimetable(tab.dataset.day);
-      document.getElementById(tab.dataset.day)?.scrollIntoView({ behavior: "smooth", block: "start" });
-    }));
-  }
-
-  selectedDay = Object.hasOwn(fetchedTimetable, selectedDay) ? selectedDay : "tuesday";
-  renderCourses();
-  renderTimetable(selectedDay);
-  renderDayDropdown();
-  renderTimetableDropdown();
 }
 
 // Initial setup
@@ -507,23 +627,23 @@ $("#updatesList")?.addEventListener("click", event => {
   });
 });
 
-$("#shareModal").addEventListener("click", event => {
-  if (event.target === $("#shareModal")) $("#closeShare").click();
+$("#shareModal")?.addEventListener("click", event => {
+  if (event.target === $("#shareModal")) $("#closeShare")?.click();
 });
 
 $$(".share-options button").forEach(button => button.addEventListener("click", () => shareTo(button.dataset.share)));
 
-$("#closeShare").addEventListener("click", () => {
-  $("#shareModal").classList.remove("show");
-  $("#shareModal").setAttribute("aria-hidden", "true");
+$("#closeShare")?.addEventListener("click", () => {
+  $("#shareModal")?.classList.remove("show");
+  $("#shareModal")?.setAttribute("aria-hidden", "true");
 });
 
-$("#notificationButton").addEventListener("click", () => $("#notificationPanel").classList.toggle("show"));
-$("#closeNotification").addEventListener("click", () => $("#notificationPanel").classList.remove("show"));
-$("#menuButton").addEventListener("click", () => $("#mobileMenu").classList.toggle("show"));
+$("#notificationButton")?.addEventListener("click", () => $("#notificationPanel")?.classList.toggle("show"));
+$("#closeNotification")?.addEventListener("click", () => $("#notificationPanel")?.classList.remove("show"));
+$("#menuButton")?.addEventListener("click", () => $("#mobileMenu")?.classList.toggle("show"));
 
-$("#mobileMenu").addEventListener("click", event => {
-  if (event.target.closest("a")) $("#mobileMenu").classList.remove("show");
+$("#mobileMenu")?.addEventListener("click", event => {
+  if (event.target.closest("a")) $("#mobileMenu")?.classList.remove("show");
 });
 
 const hoverCapablePointer = window.matchMedia("(hover: hover) and (pointer: fine)");
@@ -541,6 +661,6 @@ document.addEventListener("click", event => {
 
 document.addEventListener("click", event => {
   if (!event.target.closest("#notificationPanel, #notificationButton")) {
-    $("#notificationPanel").classList.remove("show");
+    $("#notificationPanel")?.classList.remove("show");
   }
 });

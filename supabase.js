@@ -9,18 +9,3 @@ const db = (typeof window !== 'undefined' && window.supabase)
 if (typeof window !== 'undefined') {
     window.db = db;
 }
-
-// Temporary connection test
-async function testConnection() {
-    const { data, error } = await db
-        .from('courses')
-        .select('code, title');
-
-    if (error) {
-        console.log("Supabase connection failed:", error);
-    } else {
-        console.log("Supabase connection successful!", data);
-    }
-}
-
-testConnection();
