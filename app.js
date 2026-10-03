@@ -123,34 +123,52 @@ function renderTimetable(day) {
   $$(".day-tab").forEach(tab => tab.classList.toggle("active", tab.dataset.day === selectedDay));
 }
 
-function renderDayDropdown(day = selectedDay, message) {
+function renderDayDropdown(message) {
   const days = Object.entries(fetchedTimetable);
   $$(".dropdown-day-list").forEach(list => {
     list.innerHTML = message
       ? `<p class="dropdown-empty">${message}</p><button class="dropdown-retry" type="button" data-retry="timetable">Retry</button>`
       : days.length
         ? days.map(([name, lectures]) => `
-        <button class="dropdown-day-item ${name === day ? "active" : ""}" type="button" data-day="${name}" aria-pressed="${name === day}">
-          <span>${name[0].toUpperCase() + name.slice(1)}</span>
-          <small>${lectures.length} lecture${lectures.length === 1 ? "" : "s"}</small>
-        </button>
+        <details class="dropdown-day">
+          <summary class="dropdown-day-item">
+            <span>${name[0].toUpperCase() + name.slice(1)}</span>
+            <small>${lectures.length} lecture${lectures.length === 1 ? "" : "s"}</small>
+          </summary>
+          <div class="dropdown-day-lectures">
+            ${lectures.length
+              ? lectures.map(lecture => `
+                <article class="day-lecture-preview-item">
+                  <div><strong>${lecture.code}</strong><span>${lecture.time}</span></div>
+                  <p>${lecture.title}</p>
+                  <small><i class="fa-solid fa-location-dot"></i>${lecture.venue}</small>
+                </article>
+              `).join("")
+              : `<p class="dropdown-empty">No lectures scheduled.</p>`}
+          </div>
+        </details>
         `).join("")
         : `<p class="dropdown-empty">No lecture days available.</p>`;
   });
+}
 
-  const lectures = fetchedTimetable[day] || [];
-  $$(".day-lecture-preview").forEach(preview => {
-    preview.hidden = days.length === 0;
-    preview.innerHTML = lectures.length
-      ? `<strong class="day-lecture-preview-heading">${day.toUpperCase()} SCHEDULE</strong>
-        ${lectures.map(lecture => `
-          <article class="day-lecture-preview-item">
-            <div><strong>${lecture.code}</strong><span>${lecture.time}</span></div>
-            <p>${lecture.title}</p>
-            <small><i class="fa-solid fa-location-dot"></i>${lecture.venue}</small>
-          </article>
-        `).join("")}`
-      : `<strong class="day-lecture-preview-heading">${day.toUpperCase()} SCHEDULE</strong><p class="dropdown-empty">No lectures scheduled.</p>`;
+function renderTimetableDropdown() {
+  const days = Object.entries(fetchedTimetable);
+  $$(".dropdown-timetable-list").forEach(list => {
+    list.innerHTML = days.length
+      ? days.map(([day, lectures]) => `
+        <section class="dropdown-timetable-day">
+          <strong class="dropdown-timetable-day-heading">${day.toUpperCase()}</strong>
+          ${lectures.map(lecture => `
+            <article class="dropdown-timetable-item">
+              <div><strong>${lecture.code}</strong><span>${lecture.time}</span></div>
+              <p>${lecture.title}</p>
+              <small><i class="fa-solid fa-location-dot"></i>${lecture.venue}</small>
+            </article>
+          `).join("")}
+        </section>
+      `).join("")
+      : `<p class="dropdown-empty">No lecture timetable available.</p>`;
   });
 }
 
@@ -452,7 +470,8 @@ function fetchAndRender() {
   selectedDay = Object.hasOwn(fetchedTimetable, selectedDay) ? selectedDay : "tuesday";
   renderCourses();
   renderTimetable(selectedDay);
-  renderDayDropdown(selectedDay);
+  renderDayDropdown();
+  renderTimetableDropdown();
 }
 
 // Initial setup
@@ -515,13 +534,6 @@ $$(".nav-dropdown").forEach(dropdown => {
 });
 
 document.addEventListener("click", event => {
-  const dayButton = event.target.closest(".dropdown-day-item");
-  if (dayButton) {
-    selectedDay = dayButton.dataset.day;
-    renderTimetable(selectedDay);
-    renderDayDropdown(selectedDay);
-  }
-
   const retryButton = event.target.closest(".dropdown-retry");
   if (retryButton?.dataset.retry === "announcements") fetchAnnouncements();
   if (retryButton?.dataset.retry === "timetable") fetchAndRender();

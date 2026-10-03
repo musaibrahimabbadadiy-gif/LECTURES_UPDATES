@@ -19,11 +19,17 @@
         <nav class="nav-links" aria-label="Main navigation">
             <a class="active" href="#home">Home</a>
             <details class="nav-dropdown">
-                <summary>Days <i class="fa-solid fa-chevron-down"></i></summary>
+                <summary>Timetable <i class="fa-solid fa-chevron-down"></i></summary>
+                <div class="nav-dropdown-menu day-dropdown-menu">
+                    <span class="day-menu-label">WEEKLY TIMETABLE</span>
+                    <div class="dropdown-timetable-list" aria-live="polite"></div>
+                </div>
+            </details>
+            <details class="nav-dropdown">
+                <summary>LECTURE DAYS<i class="fa-solid fa-chevron-down"></i></summary>
                 <div class="nav-dropdown-menu day-dropdown-menu">
                     <span class="day-menu-label">LECTURE DAYS</span>
                     <div class="dropdown-day-list" aria-live="polite"></div>
-                    <div class="day-lecture-preview" hidden aria-live="polite"></div>
                 </div>
             </details>
             <details class="nav-dropdown">
@@ -42,11 +48,17 @@
         <div class="mobile-menu" id="mobileMenu">
             <a href="#home">Home</a>
             <details class="nav-dropdown">
-                <summary>Days <i class="fa-solid fa-chevron-down"></i></summary>
+                <summary>Timetable <i class="fa-solid fa-chevron-down"></i></summary>
+                <div class="nav-dropdown-menu day-dropdown-menu">
+                    <span class="day-menu-label">WEEKLY TIMETABLE</span>
+                    <div class="dropdown-timetable-list" aria-live="polite"></div>
+                </div>
+            </details>
+            <details class="nav-dropdown">
+                <summary> LECTURE DAYS <i class="fa-solid fa-chevron-down"></i></summary>
                 <div class="nav-dropdown-menu day-dropdown-menu">
                     <span class="day-menu-label">LECTURE DAYS</span>
                     <div class="dropdown-day-list" aria-live="polite"></div>
-                    <div class="day-lecture-preview" hidden aria-live="polite"></div>
                 </div>
             </details>
             <details class="nav-dropdown">
